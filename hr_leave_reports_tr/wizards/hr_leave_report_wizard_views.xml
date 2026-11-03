@@ -15,7 +15,7 @@
                     <group>
                         <field name="company_id" groups="base.group_multi_company"/>
                         <field name="department_id"/>
-                        <field name="holiday_status_id"/>
+                        <field name="holiday_status_ids" widget="many2many_tags"/>
                         <field name="employee_ids" widget="many2many_tags"/>
                     </group>
                 </group>

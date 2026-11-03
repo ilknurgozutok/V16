@@ -25,8 +25,8 @@ class HrLeaveReportWizard(models.TransientModel):
         'hr.employee', string='Personeller',
         help='Boş bırakılırsa şirketteki tüm personel rapora dahil edilir.')
     department_id = fields.Many2one('hr.department', string='Departman')
-    holiday_status_id = fields.Many2one(
-        'hr.leave.type', string='İzin Türü',
+    holiday_status_ids = fields.Many2many(
+        'hr.leave.type', string='İzin Türleri',
         help='Boş bırakılırsa tüm izin türleri rapora dahil edilir.')
     state = fields.Selection([
         ('validate', 'Onaylanmış'),
@@ -56,9 +56,9 @@ class HrLeaveReportWizard(models.TransientModel):
         if self.department_id:
             domain.append(
                 ('employee_id.department_id', 'child_of', self.department_id.id))
-        if self.holiday_status_id:
+        if self.holiday_status_ids:
             domain.append(
-                ('holiday_status_id', '=', self.holiday_status_id.id))
+                ('holiday_status_id', 'in', self.holiday_status_ids.ids))
         if self.state == 'validate':
             domain.append(('state', '=', 'validate'))
         else:
@@ -78,9 +78,9 @@ class HrLeaveReportWizard(models.TransientModel):
         if self.department_id:
             domain.append(
                 ('employee_id.department_id', 'child_of', self.department_id.id))
-        if self.holiday_status_id:
+        if self.holiday_status_ids:
             domain.append(
-                ('holiday_status_id', '=', self.holiday_status_id.id))
+                ('holiday_status_id', 'in', self.holiday_status_ids.ids))
         return domain
 
     def _get_leaves(self):

@@ -22,9 +22,9 @@
                                 | <strong>Departman:</strong>
                                 <span t-field="doc.department_id.name"/>
                             </t>
-                            <t t-if="doc.holiday_status_id">
-                                | <strong>İzin Türü:</strong>
-                                <span t-field="doc.holiday_status_id.name"/>
+                            <t t-if="doc.holiday_status_ids">
+                                | <strong>İzin Türleri:</strong>
+                                <span t-field="doc.holiday_status_ids"/>
                             </t>
                             | <strong>Durum:</strong>
                             <span t-field="doc.state"/>
