@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_leave_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="doc.company_id"/>
+                <t t-call="web.external_layout">
+                    <t t-set="groups" t-value="doc.get_grouped_lines()"/>
+                    <t t-set="grand_total" t-value="sum(g['total_days'] for g in groups)"/>
+                    <div class="page">
+                        <h3>İzin Raporu</h3>
+                        <p>
+                            <strong>Dönem:</strong>
+                            <span t-field="doc.date_from"/> -
+                            <span t-field="doc.date_to"/>
+                        </p>
+                        <p>
+                            <strong>Gruplama:</strong>
+                            <t t-if="doc.group_by == 'employee'">Personel Bazlı</t>
+                            <t t-else="">İzin Türü Bazlı</t>
+                            <t t-if="doc.department_id">
+                                | <strong>Departman:</strong>
+                                <span t-field="doc.department_id.name"/>
+                            </t>
+                            <t t-if="doc.holiday_status_id">
+                                | <strong>İzin Türü:</strong>
+                                <span t-field="doc.holiday_status_id.name"/>
+                            </t>
+                            | <strong>Durum:</strong>
+                            <span t-field="doc.state"/>
+                        </p>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <t t-if="doc.group_by == 'leave_type'">
+                                        <th>Personel</th>
+                                    </t>
+                                    <t t-if="doc.group_by == 'employee'">
+                                        <th>İzin Türü</th>
+                                    </t>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th class="text-end">Gün</th>
+                                    <th>Durum</th>
+                                    <th>Açıklama</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="groups" t-as="group">
+                                    <tr style="background-color: #f2f2f2;">
+                                        <td colspan="6">
+                                            <strong t-out="group['name']"/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="group['leaves']" t-as="leave">
+                                        <tr>
+                                            <t t-if="doc.group_by == 'leave_type'">
+                                                <td t-field="leave.employee_id.name"/>
+                                            </t>
+                                            <t t-if="doc.group_by == 'employee'">
+                                                <td t-field="leave.holiday_status_id.name"/>
+                                            </t>
+                                            <td t-field="leave.request_date_from"/>
+                                            <td>
+                                                <span t-field="leave.request_date_to"/>
+                                            </td>
+                                            <td class="text-end"
+                                                t-field="leave.number_of_days"/>
+                                            <td>
+                                                <span t-field="leave.state"/>
+                                            </td>
+                                            <td t-field="leave.name"/>
+                                        </tr>
+                                    </t>
+                                    <tr>
+                                        <td colspan="3" class="text-end">
+                                            <strong>Ara Toplam</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % group['total_days']"/>
+                                        </td>
+                                        <td colspan="2"/>
+                                    </tr>
+                                </t>
+                                <tr>
+                                    <td colspan="3" class="text-end">
+                                        <strong>Genel Toplam</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong t-out="'%.1f' % grand_total"/>
+                                    </td>
+                                    <td colspan="2"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_reconciliation_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-set="company" t-value="doc.company_id"/>
+                <t t-call="web.external_layout">
+                    <t t-set="data" t-value="doc.get_reconciliation_data()"/>
+                    <t t-set="emp" t-value="doc.employee_id"/>
+                    <div class="page">
+                        <h3 class="text-center">YILLIK İZİN MUTABAKAT FORMU</h3>
+                        <br/>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 35%;"><strong>Adı Soyadı</strong></td>
+                                    <td t-field="emp.name"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Departman</strong></td>
+                                    <td t-field="emp.department_id.name"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Görevi</strong></td>
+                                    <td t-field="emp.job_id.name"/>
+                                </tr>
+                                <tr t-if="'first_contract_date' in emp._fields">
+                                    <td><strong>İşe Giriş Tarihi</strong></td>
+                                    <td t-field="emp.first_contract_date"/>
+                                </tr>
+                                <tr t-if="'departure_date' in emp._fields and emp.departure_date">
+                                    <td><strong>İşten Ayrılış Tarihi</strong></td>
+                                    <td t-field="emp.departure_date"/>
+                                </tr>
+                                <tr>
+                                    <td><strong>Mutabakat Tarihi</strong></td>
+                                    <td t-field="doc.reconciliation_date"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br/>
+                        <h5><t t-out="doc.year"/> Yılı <span t-field="doc.holiday_status_id.name"/> Bakiyesi</h5>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Önceki Dönemden Devir (Gün)</th>
+                                    <th>Hak Edilen İzin (Gün)</th>
+                                    <th>Kullanılan İzin (Gün)</th>
+                                    <th>Kalan İzin (Gün)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td t-out="'%.1f' % data['carryover']"/>
+                                    <td t-out="'%.1f' % data['allocated']"/>
+                                    <td t-out="'%.1f' % data['used']"/>
+                                    <td><strong t-out="'%.1f' % data['remaining']"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <h6>Kullanılan İzinler</h6>
+                        <table class="table table-sm o_main_table">
+                            <thead>
+                                <tr>
+                                    <th>Başlangıç</th>
+                                    <th>Bitiş</th>
+                                    <th class="text-end">Gün</th>
+                                    <th>Açıklama</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="data['leaves']" t-as="leave">
+                                    <tr>
+                                        <td t-field="leave.request_date_from"/>
+                                        <td><span t-field="leave.request_date_to"/></td>
+                                        <td class="text-end" t-field="leave.number_of_days"/>
+                                        <td t-field="leave.name"/>
+                                    </tr>
+                                </t>
+                                <tr t-if="not data['leaves']">
+                                    <td colspan="4" class="text-center fst-italic">
+                                        Dönem içinde kullanılmış izin bulunmamaktadır.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br/>
+                        <p>
+                            Yukarıda yer alan tabloda, <span t-field="company.name"/> nezdindeki
+                            <t t-out="doc.year"/> yılına ait
+                            <span t-field="doc.holiday_status_id.name"/> hak ediş ve
+                            kullanım bilgilerim gösterilmiştir. Belirtilen bilgilerin
+                            doğruluğunu, kalan izin bakiyem konusunda işveren ile mutabık
+                            olduğumu; işbu mutabakat formunun imzalanması ile birlikte
+                            gösterilen döneme ilişkin izin haklarım hakkında herhangi bir
+                            ihtilaf bulunmadığını beyan ve kabul ederim.
+                        </p>
+                        <br/><br/>
+                        <table style="width: 100%;">
+                            <tr>
+                                <td style="width: 50%; vertical-align: top;">
+                                    <strong>Çalışan</strong><br/><br/>
+                                    Adı Soyadı: <span t-field="emp.name"/><br/><br/>
+                                    İmza: ______________________<br/><br/>
+                                    Tarih: ____ / ____ / ________
+                                </td>
+                                <td style="width: 50%; vertical-align: top;">
+                                    <strong>İşveren / İnsan Kaynakları</strong><br/><br/>
+                                    Adı Soyadı: ______________________<br/><br/>
+                                    İmza: ______________________<br/><br/>
+                                    Tarih: ____ / ____ / ________
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

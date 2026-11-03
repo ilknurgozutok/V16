@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_leave_reconciliation_wizard_form" model="ir.ui.view">
+        <field name="name">hr.leave.reconciliation.wizard.form</field>
+        <field name="model">hr.leave.reconciliation.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Yıllık İzin Mutabakat Formu">
+                <group>
+                    <field name="employee_id"/>
+                    <field name="holiday_status_id"/>
+                    <field name="year"/>
+                    <field name="reconciliation_date"/>
+                </group>
+                <footer>
+                    <button name="action_print" string="Mutabakat Formu (PDF)"
+                            type="object" class="btn-primary"/>
+                    <button string="Vazgeç" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_leave_reconciliation_wizard" model="ir.actions.act_window">
+        <field name="name">Yıllık İzin Mutabakat Formu</field>
+        <field name="res_model">hr.leave.reconciliation.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_leave_reconciliation_server" model="ir.actions.server">
+        <field name="name">Yıllık İzin Mutabakat Formu</field>
+        <field name="model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="state">code</field>
+        <field name="code">
+wizard = env['hr.leave.reconciliation.wizard'].create({
+    'employee_id': records[0].id if records else False,
+})
+action = env['ir.actions.act_window']._for_xml_id(
+    'hr_leave_reports_tr.action_leave_reconciliation_wizard')
+action['res_id'] = wizard.id
+        </field>
+    </record>
+</odoo>
