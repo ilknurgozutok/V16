@@ -55,21 +55,30 @@
                                     <t t-foreach="group['leaves']" t-as="leave">
                                         <tr>
                                             <t t-if="doc.group_by == 'leave_type'">
-                                                <td t-field="leave.employee_id.name"/>
+                                                <td>
+                                                    <span t-field="leave.employee_id.name"/>
+                                                </td>
                                             </t>
                                             <t t-if="doc.group_by == 'employee'">
-                                                <td t-field="leave.holiday_status_id.name"/>
+                                                <td>
+                                                    <span t-field="leave.holiday_status_id.name"/>
+                                                </td>
                                             </t>
-                                            <td t-field="leave.request_date_from"/>
+                                            <td>
+                                                <span t-field="leave.request_date_from"/>
+                                            </td>
                                             <td>
                                                 <span t-field="leave.request_date_to"/>
                                             </td>
-                                            <td class="text-end"
-                                                t-field="leave.number_of_days"/>
+                                            <td class="text-end">
+                                                <span t-field="leave.number_of_days"/>
+                                            </td>
                                             <td>
                                                 <span t-field="leave.state"/>
                                             </td>
-                                            <td t-field="leave.name"/>
+                                            <td>
+                                                <span t-field="leave.name"/>
+                                            </td>
                                         </tr>
                                     </t>
                                     <tr>
@@ -113,27 +122,27 @@
                             <tbody>
                                 <tr>
                                     <td style="width: 35%;"><strong>Adı Soyadı</strong></td>
-                                    <td t-field="emp.name"/>
+                                    <td><span t-field="emp.name"/></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Departman</strong></td>
-                                    <td t-field="emp.department_id.name"/>
+                                    <td><span t-field="emp.department_id.name"/></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Görevi</strong></td>
-                                    <td t-field="emp.job_id.name"/>
+                                    <td><span t-field="emp.job_id.name"/></td>
                                 </tr>
                                 <tr t-if="'first_contract_date' in emp._fields">
                                     <td><strong>İşe Giriş Tarihi</strong></td>
-                                    <td t-field="emp.first_contract_date"/>
+                                    <td><span t-field="emp.first_contract_date"/></td>
                                 </tr>
                                 <tr t-if="'departure_date' in emp._fields and emp.departure_date">
                                     <td><strong>İşten Ayrılış Tarihi</strong></td>
-                                    <td t-field="emp.departure_date"/>
+                                    <td><span t-field="emp.departure_date"/></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Mutabakat Tarihi</strong></td>
-                                    <td t-field="doc.reconciliation_date"/>
+                                    <td><span t-field="doc.reconciliation_date"/></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -170,10 +179,12 @@
                             <tbody>
                                 <t t-foreach="data['leaves']" t-as="leave">
                                     <tr>
-                                        <td t-field="leave.request_date_from"/>
+                                        <td><span t-field="leave.request_date_from"/></td>
                                         <td><span t-field="leave.request_date_to"/></td>
-                                        <td class="text-end" t-field="leave.number_of_days"/>
-                                        <td t-field="leave.name"/>
+                                        <td class="text-end">
+                                            <span t-field="leave.number_of_days"/>
+                                        </td>
+                                        <td><span t-field="leave.name"/></td>
                                     </tr>
                                 </t>
                                 <tr t-if="not data['leaves']">
