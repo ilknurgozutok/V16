@@ -35,9 +35,11 @@
                                 <tr>
                                     <t t-if="doc.group_by == 'employee'">
                                         <th>Personel</th>
+                                        <th>İzin Türü</th>
                                     </t>
                                     <t t-else="">
                                         <th>İzin Türü</th>
+                                        <th>Personel</th>
                                     </t>
                                     <th class="text-end">Tahsis (Gün)</th>
                                     <th class="text-end">Kullanılan (Gün)</th>
@@ -46,15 +48,33 @@
                             </thead>
                             <tbody>
                                 <t t-foreach="groups" t-as="group">
-                                    <tr>
-                                        <td t-out="group['name']"/>
-                                        <td class="text-end" t-out="'%.1f' % group['allocated_days']"/>
-                                        <td class="text-end" t-out="'%.1f' % group['total_days']"/>
-                                        <td class="text-end" t-out="'%.1f' % group['remaining_days']"/>
+                                    <t t-foreach="group['breakdown']" t-as="line">
+                                        <tr>
+                                            <td t-if="line_first" t-out="group['name']"/>
+                                            <td t-else=""/>
+                                            <td t-out="line['name']"/>
+                                            <td class="text-end" t-out="'%.1f' % line['allocated_days']"/>
+                                            <td class="text-end" t-out="'%.1f' % line['used_days']"/>
+                                            <td class="text-end" t-out="'%.1f' % line['remaining_days']"/>
+                                        </tr>
+                                    </t>
+                                    <tr t-if="len(group['breakdown']) > 1">
+                                        <td colspan="2" class="text-end">
+                                            <strong t-out="'%s Toplamı' % group['name']"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % group['allocated_days']"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % group['total_days']"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % group['remaining_days']"/>
+                                        </td>
                                     </tr>
                                 </t>
                                 <tr>
-                                    <td><strong>Genel Toplam</strong></td>
+                                    <td colspan="2"><strong>Genel Toplam</strong></td>
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % sum(g['allocated_days'] for g in groups)"/>
                                     </td>

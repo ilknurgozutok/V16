@@ -36,9 +36,11 @@ class LeaveReportXlsx(models.AbstractModel):
             groups = wizard.get_grouped_lines()
             group_label = 'Personel' if wizard.group_by == 'employee' \
                 else 'İzin Türü'
+            breakdown_label = 'İzin Türü' if wizard.group_by == 'employee' \
+                else 'Personel'
 
             sheet.write(4, 0, 'Özet', group_fmt)
-            summary_headers = [group_label, 'Tahsis (Gün)',
+            summary_headers = [group_label, breakdown_label, 'Tahsis (Gün)',
                                'Kullanılan (Gün)', 'Kalan (Gün)']
             for col, label in enumerate(summary_headers):
                 sheet.write(5, col, label, header)
@@ -47,18 +49,32 @@ class LeaveReportXlsx(models.AbstractModel):
             total_used = 0.0
             total_remaining = 0.0
             for group in groups:
-                sheet.write(row, 0, group['name'], cell)
-                sheet.write_number(row, 1, group['allocated_days'], num)
-                sheet.write_number(row, 2, group['total_days'], num)
-                sheet.write_number(row, 3, group['remaining_days'], num)
+                first_line = True
+                for line in group['breakdown']:
+                    sheet.write(
+                        row, 0, group['name'] if first_line else '', cell)
+                    sheet.write(row, 1, line['name'], cell)
+                    sheet.write_number(row, 2, line['allocated_days'], num)
+                    sheet.write_number(row, 3, line['used_days'], num)
+                    sheet.write_number(row, 4, line['remaining_days'], num)
+                    first_line = False
+                    row += 1
+                if len(group['breakdown']) > 1:
+                    sheet.merge_range(
+                        row, 0, row, 1, '%s Toplamı' % group['name'], group_fmt)
+                    sheet.write_number(
+                        row, 2, group['allocated_days'], num_bold)
+                    sheet.write_number(row, 3, group['total_days'], num_bold)
+                    sheet.write_number(
+                        row, 4, group['remaining_days'], num_bold)
+                    row += 1
                 total_alloc += group['allocated_days']
                 total_used += group['total_days']
                 total_remaining += group['remaining_days']
-                row += 1
-            sheet.write(row, 0, 'Genel Toplam', header)
-            sheet.write_number(row, 1, total_alloc, num_bold)
-            sheet.write_number(row, 2, total_used, num_bold)
-            sheet.write_number(row, 3, total_remaining, num_bold)
+            sheet.merge_range(row, 0, row, 1, 'Genel Toplam', header)
+            sheet.write_number(row, 2, total_alloc, num_bold)
+            sheet.write_number(row, 3, total_used, num_bold)
+            sheet.write_number(row, 4, total_remaining, num_bold)
             row += 2
 
             headers = ['Personel', 'Departman', 'İzin Türü',

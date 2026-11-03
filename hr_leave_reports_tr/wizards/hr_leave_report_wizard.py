@@ -94,6 +94,8 @@ class HrLeaveReportWizard(models.TransientModel):
         self.ensure_one()
         key_field = 'employee_id' if self.group_by == 'employee' \
             else 'holiday_status_id'
+        breakdown_field = 'holiday_status_id' if self.group_by == 'employee' \
+            else 'employee_id'
         leaves = self._get_leaves()
         allocations = self.env['hr.leave.allocation'].search(
             self._get_allocation_domain())
@@ -110,6 +112,24 @@ class HrLeaveReportWizard(models.TransientModel):
                 lambda a: a[key_field] == record)
             allocated = sum(group_allocations.mapped('number_of_days'))
             used = sum(leaves.mapped('number_of_days'))
+            breakdown_records = (
+                leaves.mapped(breakdown_field)
+                | group_allocations.mapped(breakdown_field)).sorted('name')
+            breakdown = []
+            for brecord in breakdown_records:
+                b_leaves = leaves.filtered(
+                    lambda l: l[breakdown_field] == brecord)
+                b_allocations = group_allocations.filtered(
+                    lambda a: a[breakdown_field] == brecord)
+                b_allocated = sum(b_allocations.mapped('number_of_days'))
+                b_used = sum(b_leaves.mapped('number_of_days'))
+                breakdown.append({
+                    'record': brecord,
+                    'name': brecord.display_name,
+                    'allocated_days': b_allocated,
+                    'used_days': b_used,
+                    'remaining_days': b_allocated - b_used,
+                })
             result.append({
                 'record': record,
                 'name': record.display_name,
@@ -117,6 +137,7 @@ class HrLeaveReportWizard(models.TransientModel):
                 'total_days': used,
                 'allocated_days': allocated,
                 'remaining_days': allocated - used,
+                'breakdown': breakdown,
             })
         return result
 
