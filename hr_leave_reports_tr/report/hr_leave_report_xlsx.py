@@ -33,15 +33,45 @@ class LeaveReportXlsx(models.AbstractModel):
             sheet.write(2, 1, dict(wizard._fields['group_by'].selection)
                         .get(wizard.group_by))
 
+            groups = wizard.get_grouped_lines()
+            group_label = 'Personel' if wizard.group_by == 'employee' \
+                else 'İzin Türü'
+
+            sheet.write(4, 0, 'Özet', group_fmt)
+            summary_headers = [group_label, 'Tahsis (Gün)',
+                               'Kullanılan (Gün)', 'Kalan (Gün)']
+            for col, label in enumerate(summary_headers):
+                sheet.write(5, col, label, header)
+            row = 6
+            total_alloc = 0.0
+            total_used = 0.0
+            total_remaining = 0.0
+            for group in groups:
+                sheet.write(row, 0, group['name'], cell)
+                sheet.write_number(row, 1, group['allocated_days'], num)
+                sheet.write_number(row, 2, group['total_days'], num)
+                sheet.write_number(row, 3, group['remaining_days'], num)
+                total_alloc += group['allocated_days']
+                total_used += group['total_days']
+                total_remaining += group['remaining_days']
+                row += 1
+            sheet.write(row, 0, 'Genel Toplam', header)
+            sheet.write_number(row, 1, total_alloc, num_bold)
+            sheet.write_number(row, 2, total_used, num_bold)
+            sheet.write_number(row, 3, total_remaining, num_bold)
+            row += 2
+
             headers = ['Personel', 'Departman', 'İzin Türü',
                        'Başlangıç', 'Bitiş', 'Gün', 'Durum', 'Açıklama']
+            sheet.write(row, 0, 'Detay', group_fmt)
+            row += 1
             for col, label in enumerate(headers):
-                sheet.write(4, col, label, header)
+                sheet.write(row, col, label, header)
+            row += 1
 
-            row = 5
             grand_total = 0.0
             states = dict(wizard.env['hr.leave']._fields['state'].selection)
-            for group in wizard.get_grouped_lines():
+            for group in groups:
                 sheet.merge_range(
                     row, 0, row, len(headers) - 1, group['name'], group_fmt)
                 row += 1
