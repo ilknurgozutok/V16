@@ -263,8 +263,12 @@
                         </t>
                         <br/>
                         <p>
-                            Yukarıda yer alan tabloda, <span t-field="company.name"/> nezdindeki
-                            <t t-out="doc.year"/> yılına ait
+                            Yukarıda yer alan tabloda, <span t-field="company.name"/> nezdinde
+                            <t t-if="'first_contract_date' in emp._fields and emp.first_contract_date">
+                                işe başlangıç tarihim olan <span t-field="emp.first_contract_date"/>
+                            </t>
+                            <t t-else="">işe başlangıç tarihim</t>
+                            itibariyle oluşan
                             <span t-field="doc.holiday_status_id.name"/> hak ediş ve
                             kullanım bilgilerim gösterilmiştir. Belirtilen bilgilerin
                             doğruluğunu, kalan izin bakiyem konusunda işveren ile mutabık

@@ -68,12 +68,13 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         return self._get_leaves_in_period(year_start, year_end)
 
     def _get_start_year(self):
-        """İşe giriş yılı; yoksa ilk tahsis/izin yılı, o da yoksa seçilen yıl."""
+        """Tablonun başlayacağı yıl: işe giriş, ilk tahsis ve ilk izin
+        yıllarından en erkeni (hatalı erken kayıtlar da görünsün)."""
         self.ensure_one()
         emp = self.employee_id
-        if 'first_contract_date' in emp._fields and emp.first_contract_date:
-            return min(emp.first_contract_date.year, self.year)
         years = []
+        if 'first_contract_date' in emp._fields and emp.first_contract_date:
+            years.append(emp.first_contract_date.year)
         first_leave = self.env['hr.leave'].search([
             ('employee_id', '=', emp.id),
             ('holiday_status_id', '=', self.holiday_status_id.id),
@@ -116,62 +117,22 @@ class HrLeaveReconciliationWizard(models.TransientModel):
             })
         return lines
 
-    def _get_carryover_lines(self):
-        """Seçilen yıla devreden bakiye: yıla girerken hâlâ geçerli olan eski
-        tahsislerin, kendi geçerlilik penceresinde kullanılmış izinler
-        düşüldükten sonraki kalan günlerinin dönem bazında dökümü."""
-        self.ensure_one()
-        year_start, _year_end = self._get_year_bounds()
-        prior_allocations = self.env['hr.leave.allocation'].search([
-            ('employee_id', '=', self.employee_id.id),
-            ('holiday_status_id', '=', self.holiday_status_id.id),
-            ('state', '=', 'validate'),
-            ('date_from', '<', year_start),
-            '|', ('date_to', '=', False), ('date_to', '>=', year_start),
-        ], order='date_from')
-        lines = []
-        Leave = self.env['hr.leave']
-        for allocation in prior_allocations:
-            domain = [
-                ('employee_id', '=', self.employee_id.id),
-                ('holiday_status_id', '=', self.holiday_status_id.id),
-                ('state', '=', 'validate'),
-                ('request_date_from', '>=', allocation.date_from),
-                ('request_date_from', '<', year_start),
-            ]
-            if allocation.date_to:
-                domain.append(
-                    ('request_date_from', '<=', allocation.date_to))
-            used = sum(Leave.search(domain).mapped('number_of_days'))
-            remaining = max(0.0, allocation.number_of_days - used)
-            period_from = fields.Date.to_date(allocation.date_from)
-            period_to = allocation.date_to and \
-                fields.Date.to_date(allocation.date_to)
-            lines.append({
-                'allocation': allocation,
-                'period': '%s - %s' % (
-                    period_from.strftime('%d/%m/%Y'),
-                    period_to.strftime('%d/%m/%Y') if period_to
-                    else 'Süresiz'),
-                'allocated': allocation.number_of_days,
-                'used': used,
-                'remaining': remaining,
-            })
-        return lines
-
     def get_reconciliation_data(self):
         """Mutabakat formunun kullandığı bakiye verisi."""
         self.ensure_one()
         allocations = self._get_year_allocations()
         leaves = self._get_year_leaves()
-        carryover_lines = self._get_carryover_lines()
-        carryover = sum(line['remaining'] for line in carryover_lines)
         allocated = sum(allocations.mapped('number_of_days'))
         used = sum(leaves.mapped('number_of_days'))
         yearly_summary = self._get_yearly_summary()
+        # Devir: seçilen yıldan önceki yılların kümülatif net bakiyesi
+        carryover = sum(
+            line['allocated'] - line['used']
+            for line in yearly_summary if line['year'] < self.year)
         return {
+            'start_year': yearly_summary and
+                yearly_summary[0]['year'] or self.year,
             'carryover': carryover,
-            'carryover_lines': carryover_lines,
             'allocated': allocated,
             'used': used,
             'remaining': carryover + allocated - used,
