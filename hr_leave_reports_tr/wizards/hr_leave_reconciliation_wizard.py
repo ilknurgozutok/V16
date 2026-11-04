@@ -32,14 +32,20 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         self.ensure_one()
         return date(self.year, 1, 1), date(self.year, 12, 31)
 
-    def _get_allocations_in_period(self, period_start, period_end):
+    def _get_all_allocations(self):
         return self.env['hr.leave.allocation'].search([
             ('employee_id', '=', self.employee_id.id),
             ('holiday_status_id', '=', self.holiday_status_id.id),
             ('state', '=', 'validate'),
-            ('date_from', '<=', period_end),
-            '|', ('date_to', '=', False), ('date_to', '>=', period_start),
         ])
+
+    @staticmethod
+    def _get_allocation_year(allocation):
+        """Tahsisin ait olduğu yıl: geçerlilik başlangıç (date_from) yılı."""
+        start = fields.Date.to_date(allocation.date_from)
+        if start:
+            return start.year
+        return allocation.create_date.year
 
     def _get_leaves_in_period(self, period_start, period_end):
         return self.env['hr.leave'].search([
@@ -53,8 +59,8 @@ class HrLeaveReconciliationWizard(models.TransientModel):
 
     def _get_year_allocations(self):
         self.ensure_one()
-        year_start, year_end = self._get_year_bounds()
-        return self._get_allocations_in_period(year_start, year_end)
+        return self._get_all_allocations().filtered(
+            lambda a: self._get_allocation_year(a) == self.year)
 
     def _get_year_leaves(self):
         self.ensure_one()
@@ -89,12 +95,16 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         """İşe başlangıç yılından seçilen yıla kadar yıl bazında
         tahsis/kullanılan satırları ve kümülatif kalan bakiye."""
         self.ensure_one()
+        allocated_by_year = {}
+        for allocation in self._get_all_allocations():
+            year = self._get_allocation_year(allocation)
+            allocated_by_year[year] = allocated_by_year.get(year, 0.0) \
+                + allocation.number_of_days
         lines = []
         balance = 0.0
         for year in range(self._get_start_year(), self.year + 1):
             year_start, year_end = date(year, 1, 1), date(year, 12, 31)
-            allocated = sum(self._get_allocations_in_period(
-                year_start, year_end).mapped('number_of_days'))
+            allocated = allocated_by_year.get(year, 0.0)
             used = sum(self._get_leaves_in_period(
                 year_start, year_end).mapped('number_of_days'))
             balance += allocated - used

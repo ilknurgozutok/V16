@@ -70,8 +70,6 @@ class HrLeaveReportWizard(models.TransientModel):
         domain = [
             ('employee_id.company_id', '=', self.company_id.id),
             ('state', '=', 'validate'),
-            ('date_from', '<=', self.date_to),
-            '|', ('date_to', '=', False), ('date_to', '>=', self.date_from),
         ]
         if self.employee_ids:
             domain.append(('employee_id', 'in', self.employee_ids.ids))
@@ -82,6 +80,24 @@ class HrLeaveReportWizard(models.TransientModel):
             domain.append(
                 ('holiday_status_id', 'in', self.holiday_status_ids.ids))
         return domain
+
+    @staticmethod
+    def _get_allocation_year(allocation):
+        """Tahsisin ait olduğu yıl: geçerlilik başlangıç (date_from) yılı."""
+        start = fields.Date.to_date(allocation.date_from)
+        if start:
+            return start.year
+        return allocation.create_date.year
+
+    def _get_allocations(self):
+        """Seçilen döneme ait tahsisler: tahsisin ait olduğu yıl dönemin
+        yıl aralığı içinde olmalı (süresiz tahsisler her yıla sayılmaz)."""
+        self.ensure_one()
+        allocations = self.env['hr.leave.allocation'].search(
+            self._get_allocation_domain())
+        return allocations.filtered(
+            lambda a: self.date_from.year
+            <= self._get_allocation_year(a) <= self.date_to.year)
 
     def _get_leaves(self):
         self.ensure_one()
@@ -97,8 +113,7 @@ class HrLeaveReportWizard(models.TransientModel):
         breakdown_field = 'holiday_status_id' if self.group_by == 'employee' \
             else 'employee_id'
         leaves = self._get_leaves()
-        allocations = self.env['hr.leave.allocation'].search(
-            self._get_allocation_domain())
+        allocations = self._get_allocations()
         groups = OrderedDict()
         for leave in leaves:
             groups.setdefault(leave[key_field], self.env['hr.leave'])
