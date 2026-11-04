@@ -58,7 +58,7 @@
                                             <td class="text-end" t-out="'%.1f' % line['remaining_days']"/>
                                         </tr>
                                     </t>
-                                    <tr t-if="len(group['breakdown']) > 1">
+                                    <tr t-if="len(groups) == 1 and len(group['breakdown']) > 1">
                                         <td colspan="2" class="text-end">
                                             <strong t-out="'%s Toplamı' % group['name']"/>
                                         </td>
@@ -226,57 +226,41 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <t t-if="data['carryover_lines']">
-                            <h6>Devirlenen İzin Hakları</h6>
+                        <t t-if="data['yearly_summary']">
+                            <h6>Yıl Bazında Özet</h6>
                             <table class="table table-sm o_main_table">
                                 <thead>
                                     <tr>
-                                        <th>Tahsis Dönemi</th>
+                                        <th>Yıl</th>
                                         <th class="text-end">Tahsis (Gün)</th>
                                         <th class="text-end">Kullanılan (Gün)</th>
-                                        <th class="text-end">Devreden (Gün)</th>
+                                        <th class="text-end">Kalan (Gün)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="data['carryover_lines']" t-as="line">
+                                    <t t-foreach="data['yearly_summary']" t-as="line">
                                         <tr>
-                                            <td t-out="line['period']"/>
+                                            <td t-out="line['year']"/>
                                             <td class="text-end" t-out="'%.1f' % line['allocated']"/>
                                             <td class="text-end" t-out="'%.1f' % line['used']"/>
                                             <td class="text-end" t-out="'%.1f' % line['remaining']"/>
                                         </tr>
                                     </t>
+                                    <tr>
+                                        <td><strong>Toplam İzin Hakkı</strong></td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % data['yearly_allocated_total']"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % data['yearly_used_total']"/>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong t-out="'%.1f' % data['yearly_remaining']"/>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </t>
-                        <h6>Kullanılan İzinler</h6>
-                        <table class="table table-sm o_main_table">
-                            <thead>
-                                <tr>
-                                    <th>Başlangıç</th>
-                                    <th>Bitiş</th>
-                                    <th class="text-end">Gün</th>
-                                    <th>Açıklama</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-foreach="data['leaves']" t-as="leave">
-                                    <tr>
-                                        <td><span t-field="leave.request_date_from"/></td>
-                                        <td><span t-field="leave.request_date_to"/></td>
-                                        <td class="text-end">
-                                            <span t-field="leave.number_of_days"/>
-                                        </td>
-                                        <td><span t-field="leave.name"/></td>
-                                    </tr>
-                                </t>
-                                <tr t-if="not data['leaves']">
-                                    <td colspan="4" class="text-center fst-italic">
-                                        Dönem içinde kullanılmış izin bulunmamaktadır.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
                         <br/>
                         <p>
                             Yukarıda yer alan tabloda, <span t-field="company.name"/> nezdindeki

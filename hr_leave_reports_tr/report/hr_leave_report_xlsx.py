@@ -59,7 +59,7 @@ class LeaveReportXlsx(models.AbstractModel):
                     sheet.write_number(row, 4, line['remaining_days'], num)
                     first_line = False
                     row += 1
-                if len(group['breakdown']) > 1:
+                if len(groups) == 1 and len(group['breakdown']) > 1:
                     sheet.merge_range(
                         row, 0, row, 1, '%s Toplamı' % group['name'], group_fmt)
                     sheet.write_number(
