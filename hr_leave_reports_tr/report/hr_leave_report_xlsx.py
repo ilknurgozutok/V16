@@ -64,13 +64,14 @@ class LeaveReportXlsx(models.AbstractModel):
                         row, 0, row, 1, '%s Toplamı' % group['name'], group_fmt)
                     sheet.write_number(
                         row, 2, group['allocated_days'], num_bold)
-                    sheet.write_number(row, 3, group['total_days'], num_bold)
                     sheet.write_number(
-                        row, 4, group['remaining_days'], num_bold)
+                        row, 3, group['summary_used_days'], num_bold)
+                    sheet.write_number(
+                        row, 4, group['summary_remaining_days'], num_bold)
                     row += 1
                 total_alloc += group['allocated_days']
-                total_used += group['total_days']
-                total_remaining += group['remaining_days']
+                total_used += group['summary_used_days']
+                total_remaining += group['summary_remaining_days']
             sheet.merge_range(row, 0, row, 1, 'Genel Toplam', header)
             sheet.write_number(row, 2, total_alloc, num_bold)
             sheet.write_number(row, 3, total_used, num_bold)

@@ -112,9 +112,8 @@ class HrLeaveReportWizard(models.TransientModel):
                 lambda a: a[key_field] == record)
             allocated = sum(group_allocations.mapped('number_of_days'))
             used = sum(leaves.mapped('number_of_days'))
-            breakdown_records = (
-                leaves.mapped(breakdown_field)
-                | group_allocations.mapped(breakdown_field)).sorted('name')
+            breakdown_records = group_allocations.mapped(
+                breakdown_field).sorted('name')
             breakdown = []
             for brecord in breakdown_records:
                 b_leaves = leaves.filtered(
@@ -130,6 +129,7 @@ class HrLeaveReportWizard(models.TransientModel):
                     'used_days': b_used,
                     'remaining_days': b_allocated - b_used,
                 })
+            summary_used = sum(b['used_days'] for b in breakdown)
             result.append({
                 'record': record,
                 'name': record.display_name,
@@ -137,6 +137,8 @@ class HrLeaveReportWizard(models.TransientModel):
                 'total_days': used,
                 'allocated_days': allocated,
                 'remaining_days': allocated - used,
+                'summary_used_days': summary_used,
+                'summary_remaining_days': allocated - summary_used,
                 'breakdown': breakdown,
             })
         return result

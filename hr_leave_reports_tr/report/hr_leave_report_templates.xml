@@ -66,10 +66,10 @@
                                             <strong t-out="'%.1f' % group['allocated_days']"/>
                                         </td>
                                         <td class="text-end">
-                                            <strong t-out="'%.1f' % group['total_days']"/>
+                                            <strong t-out="'%.1f' % group['summary_used_days']"/>
                                         </td>
                                         <td class="text-end">
-                                            <strong t-out="'%.1f' % group['remaining_days']"/>
+                                            <strong t-out="'%.1f' % group['summary_remaining_days']"/>
                                         </td>
                                     </tr>
                                 </t>
@@ -79,10 +79,10 @@
                                         <strong t-out="'%.1f' % sum(g['allocated_days'] for g in groups)"/>
                                     </td>
                                     <td class="text-end">
-                                        <strong t-out="'%.1f' % grand_total"/>
+                                        <strong t-out="'%.1f' % sum(g['summary_used_days'] for g in groups)"/>
                                     </td>
                                     <td class="text-end">
-                                        <strong t-out="'%.1f' % sum(g['remaining_days'] for g in groups)"/>
+                                        <strong t-out="'%.1f' % sum(g['summary_remaining_days'] for g in groups)"/>
                                     </td>
                                 </tr>
                             </tbody>
