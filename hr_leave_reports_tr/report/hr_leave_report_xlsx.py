@@ -72,15 +72,16 @@ class LeaveReportXlsx(models.AbstractModel):
                 total_alloc += group['allocated_days']
                 total_used += group['summary_used_days']
                 total_remaining += group['summary_remaining_days']
-            sheet.merge_range(row, 0, row, 1, 'Genel Toplam', header)
-            sheet.write_number(row, 2, total_alloc, num_bold)
-            sheet.write_number(row, 3, total_used, num_bold)
-            sheet.write_number(row, 4, total_remaining, num_bold)
+            if not wizard.department_id:
+                sheet.merge_range(row, 0, row, 1, 'Genel Toplam', header)
+                sheet.write_number(row, 2, total_alloc, num_bold)
+                sheet.write_number(row, 3, total_used, num_bold)
+                sheet.write_number(row, 4, total_remaining, num_bold)
             row += 2
 
             headers = ['Personel', 'Departman', 'İzin Türü',
                        'Başlangıç', 'Bitiş', 'Gün', 'Durum', 'Açıklama']
-            sheet.write(row, 0, 'Detay', group_fmt)
+            sheet.write(row, 0, 'İzin Kullanım Detayı', group_fmt)
             row += 1
             for col, label in enumerate(headers):
                 sheet.write(row, col, label, header)
@@ -110,10 +111,13 @@ class LeaveReportXlsx(models.AbstractModel):
                     sheet.write(row, 6, states.get(leave.state, ''), cell)
                     sheet.write(row, 7, leave.name or '', cell)
                     row += 1
-                sheet.merge_range(row, 0, row, 4, '%s Toplamı' % group['name'],
-                                  group_fmt)
+                sheet.merge_range(
+                    row, 0, row, 4,
+                    '%s Ara Toplamı (Kullanılan İzin)' % group['name'],
+                    group_fmt)
                 sheet.write_number(row, 5, group['total_days'], num_bold)
                 row += 1
                 grand_total += group['total_days']
-            sheet.merge_range(row, 0, row, 4, 'Genel Toplam', header)
+            sheet.merge_range(
+                row, 0, row, 4, 'Genel Toplam (Kullanılan İzin)', header)
             sheet.write_number(row, 5, grand_total, num_bold)

@@ -73,7 +73,7 @@
                                         </td>
                                     </tr>
                                 </t>
-                                <tr>
+                                <tr t-if="not doc.department_id">
                                     <td colspan="2"><strong>Genel Toplam</strong></td>
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % sum(g['allocated_days'] for g in groups)"/>
@@ -88,7 +88,7 @@
                             </tbody>
                         </table>
                         <br/>
-                        <h5>Detay</h5>
+                        <h5>İzin Kullanım Detayı</h5>
                         <table class="table table-sm o_main_table">
                             <thead>
                                 <tr>
@@ -143,7 +143,7 @@
                                     </t>
                                     <tr>
                                         <td colspan="3" class="text-end">
-                                            <strong>Ara Toplam</strong>
+                                            <strong>Ara Toplam (Kullanılan İzin)</strong>
                                         </td>
                                         <td class="text-end">
                                             <strong t-out="'%.1f' % group['total_days']"/>
@@ -153,7 +153,7 @@
                                 </t>
                                 <tr>
                                     <td colspan="3" class="text-end">
-                                        <strong>Genel Toplam</strong>
+                                        <strong>Genel Toplam (Kullanılan İzin)</strong>
                                     </td>
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % grand_total"/>
@@ -214,7 +214,7 @@
                                     <th>Önceki Dönemden Devir (Gün)</th>
                                     <th>Hak Edilen İzin (Gün)</th>
                                     <th>Kullanılan İzin (Gün)</th>
-                                    <th>Kalan İzin (Gün)</th>
+                                    <th>Kalan İzin (Kümülatif Gün)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -234,7 +234,7 @@
                                         <th>Yıl</th>
                                         <th class="text-end">Tahsis (Gün)</th>
                                         <th class="text-end">Kullanılan (Gün)</th>
-                                        <th class="text-end">Kalan (Gün)</th>
+                                        <th class="text-end">Kalan (Kümülatif Gün)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
