@@ -54,14 +54,28 @@ Raporları yalnızca <em>İzinler / Yönetici (Officer)</em> yetkisine sahip kul
 <h3>2.1 Sihirbaz Alanları</h3>
 <table>
   <tr><th>Alan</th><th>Açıklama</th></tr>
+  <tr><td class="field">İşe Girişten İtibaren</td>
+      <td>İşaretlenirse her personel kendi <em>İşe Giriş Tarihi</em>'nden itibaren
+          raporlanır; Başlangıç Tarihi alanı gizlenir ve yok sayılır. Toplu
+          personel seçiminde herkes için kendi tarihi uygulanır. İzin
+          kayıtları işe giriş öncesi dönemi kapsamaz; tahsisler ise personelin
+          tüm onaylı tahsisleri üzerinden hesaplanır. İşe giriş tarihi boş olan
+          personel için Başlangıç Tarihi değeri kullanılır ve raporda
+          "(tarih yok)" olarak görünür. Bu modda özet tablosunda her
+          personelin işe giriş tarihi adının yanında gösterilir; tek personel
+          seçiliyse Dönem satırında da yer alır.</td></tr>
   <tr><td class="field">Başlangıç / Bitiş Tarihi</td>
-      <td>Rapor dönemi. Varsayılan: yıl başı &ndash; bugün.</td></tr>
+      <td>Rapor dönemi. Varsayılan: yıl başı &ndash; bugün.
+          "İşe Girişten İtibaren" seçiliyse başlangıç alanı görünmez.</td></tr>
   <tr><td class="field">Gruplama</td>
       <td><strong>Personel Bazlı:</strong> Her personelin altında izin türü kırılımı.<br>
           <strong>İzin Türü Bazlı:</strong> Her izin türünün altında personel kırılımı.</td></tr>
   <tr><td class="field">Durum</td>
       <td><strong>Onaylanmış:</strong> Yalnızca onaylı izinler.<br>
           <strong>Tümü:</strong> İptal ve reddedilenler hariç tüm kayıtlar.</td></tr>
+  <tr><td class="field">Açıklamaları Göster</td>
+      <td>İşaretlenirse detay tablosunda izin açıklamaları da listelenir;
+          işaretlenmezse Açıklama kolonu rapora dahil edilmez.</td></tr>
   <tr><td class="field">Şirket</td>
       <td>Yalnızca çok şirketli kurulumlarda görünür.</td></tr>
   <tr><td class="field">Departman</td>
@@ -94,8 +108,8 @@ izin türü bazlı raporda her türün personelleri.</p>
   <li>Departman filtresi seçiliyken özet tabloda genel toplam satırı gösterilmez.</li>
 </ul>
 <p><strong>İzin Kullanım Detayı</strong> (alt bölüm): Dönemdeki tüm izin kayıtlarını
-başlangıç/bitiş tarihi, gün, durum ve açıklama bilgisiyle listeler. Ara toplam ve
-genel toplam satırları kullanılan izin gününü gösterir.</p>
+başlangıç/bitiş tarihi, gün, durum ve (seçiliyse) açıklama bilgisiyle listeler.
+Ara toplam ve genel toplam satırları kullanılan izin gününü gösterir.</p>
 
 <div class="tip"><strong>İpucu:</strong> Personel bazlı toplu rapor için
 <span class="field">Personeller</span> alanını boş bırakıp

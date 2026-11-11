@@ -26,10 +26,15 @@ class LeaveReportXlsx(models.AbstractModel):
 
             sheet.write(0, 0, 'İzin Raporu', title)
             sheet.write(1, 0, 'Dönem', subtitle)
+            period_from = 'İşe Girişten İtibaren' \
+                if wizard.start_from_hire_date \
+                else wizard.date_from.strftime('%d/%m/%Y')
+            if wizard.start_from_hire_date \
+                    and len(wizard.employee_ids) == 1:
+                period_from += ' (%s)' % wizard._get_employee_start_label(
+                    wizard.employee_ids)
             sheet.write(1, 1, '%s - %s' % (
-                'İşe Girişten İtibaren' if wizard.start_from_hire_date
-                else wizard.date_from.strftime('%d/%m/%Y'),
-                wizard.date_to.strftime('%d/%m/%Y')))
+                period_from, wizard.date_to.strftime('%d/%m/%Y')))
             sheet.write(2, 0, 'Gruplama', subtitle)
             sheet.write(2, 1, dict(wizard._fields['group_by'].selection)
                         .get(wizard.group_by))
@@ -52,9 +57,17 @@ class LeaveReportXlsx(models.AbstractModel):
             for group in groups:
                 first_line = True
                 for line in group['breakdown']:
+                    group_name = group['name']
+                    if group['hire_label']:
+                        group_name += ' (İşe Giriş: %s)' \
+                            % group['hire_label']
+                    line_name = line['name']
+                    if line['hire_label']:
+                        line_name += ' (İşe Giriş: %s)' \
+                            % line['hire_label']
                     sheet.write(
-                        row, 0, group['name'] if first_line else '', cell)
-                    sheet.write(row, 1, line['name'], cell)
+                        row, 0, group_name if first_line else '', cell)
+                    sheet.write(row, 1, line_name, cell)
                     sheet.write_number(row, 2, line['allocated_days'], num)
                     sheet.write_number(row, 3, line['used_days'], num)
                     sheet.write_number(row, 4, line['remaining_days'], num)

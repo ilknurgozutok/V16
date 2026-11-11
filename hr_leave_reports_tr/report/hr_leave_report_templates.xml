@@ -11,7 +11,7 @@
                         <h3>İzin Raporu</h3>
                         <p>
                             <strong>Dönem:</strong>
-                            <t t-if="doc.start_from_hire_date">İşe Girişten İtibaren</t>
+                            <t t-if="doc.start_from_hire_date">İşe Girişten İtibaren<t t-if="len(doc.employee_ids) == 1"> (<t t-out="doc._get_employee_start_label(doc.employee_ids)"/>)</t></t>
                             <t t-else=""><span t-field="doc.date_from"/></t>
                             - <span t-field="doc.date_to"/>
                         </p>
@@ -51,9 +51,9 @@
                                 <t t-foreach="groups" t-as="group">
                                     <t t-foreach="group['breakdown']" t-as="line">
                                         <tr>
-                                            <td t-if="line_first" t-out="group['name']"/>
+                                            <td t-if="line_first"><t t-out="group['name']"/><t t-if="group['hire_label']"> (İşe Giriş: <t t-out="group['hire_label']"/>)</t></td>
                                             <td t-else=""/>
-                                            <td t-out="line['name']"/>
+                                            <td><t t-out="line['name']"/><t t-if="line['hire_label']"> (İşe Giriş: <t t-out="line['hire_label']"/>)</t></td>
                                             <td class="text-end" t-out="'%.1f' % line['allocated_days']"/>
                                             <td class="text-end" t-out="'%.1f' % line['used_days']"/>
                                             <td class="text-end" t-out="'%.1f' % line['remaining_days']"/>

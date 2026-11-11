@@ -3,6 +3,7 @@ from collections import OrderedDict
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
+from odoo.tools.misc import format_date
 
 
 class HrLeaveReportWizard(models.TransientModel):
@@ -59,6 +60,20 @@ class HrLeaveReportWizard(models.TransientModel):
                 and employee.first_contract_date:
             return fields.Date.to_date(employee.first_contract_date)
         return self.date_from
+
+    def _get_employee_start_label(self, employee):
+        """Rapor çıktısında gösterilecek işe giriş tarihi etiketi."""
+        self.ensure_one()
+        if 'first_contract_date' in employee._fields \
+                and employee.first_contract_date:
+            return format_date(self.env, employee.first_contract_date)
+        return _('tarih yok')
+
+    def _start_label(self, record):
+        """Personel kaydıysa ve mod açıksa işe giriş etiketi, yoksa boş."""
+        if self.start_from_hire_date and record._name == 'hr.employee':
+            return self._get_employee_start_label(record)
+        return ''
 
     def _get_target_employees(self):
         self.ensure_one()
@@ -179,6 +194,7 @@ class HrLeaveReportWizard(models.TransientModel):
                 breakdown.append({
                     'record': brecord,
                     'name': brecord.display_name,
+                    'hire_label': self._start_label(brecord),
                     'allocated_days': b_allocated,
                     'used_days': b_used,
                     'remaining_days': b_allocated - b_used,
@@ -187,6 +203,7 @@ class HrLeaveReportWizard(models.TransientModel):
             result.append({
                 'record': record,
                 'name': record.display_name,
+                'hire_label': self._start_label(record),
                 'leaves': leaves,
                 'total_days': used,
                 'allocated_days': allocated,
