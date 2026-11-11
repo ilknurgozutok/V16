@@ -45,11 +45,20 @@ class LeaveReportXlsx(models.AbstractModel):
             breakdown_label = 'İzin Türü' if wizard.group_by == 'employee' \
                 else 'Personel'
 
+            show_hire_col = wizard.start_from_hire_date \
+                and len(wizard.employee_ids) != 1
             sheet.write(4, 0, 'Özet', group_fmt)
-            summary_headers = [group_label, breakdown_label, 'Tahsis (Gün)',
-                               'Kullanılan (Gün)', 'Kalan (Gün)']
+            summary_headers = [group_label]
+            if wizard.group_by == 'employee' and show_hire_col:
+                summary_headers.append('İşe Giriş Tarihi')
+            summary_headers.append(breakdown_label)
+            if wizard.group_by == 'leave_type' and show_hire_col:
+                summary_headers.append('İşe Giriş Tarihi')
+            summary_headers += ['Tahsis (Gün)', 'Kullanılan (Gün)',
+                                'Kalan (Gün)']
             for col, label in enumerate(summary_headers):
                 sheet.write(5, col, label, header)
+            label_cols = len(summary_headers) - 3
             row = 6
             total_alloc = 0.0
             total_used = 0.0
@@ -57,40 +66,49 @@ class LeaveReportXlsx(models.AbstractModel):
             for group in groups:
                 first_line = True
                 for line in group['breakdown']:
-                    group_name = group['name']
-                    if group['hire_label']:
-                        group_name += ' (İşe Giriş: %s)' \
-                            % group['hire_label']
-                    line_name = line['name']
-                    if line['hire_label']:
-                        line_name += ' (İşe Giriş: %s)' \
-                            % line['hire_label']
+                    col = 0
                     sheet.write(
-                        row, 0, group_name if first_line else '', cell)
-                    sheet.write(row, 1, line_name, cell)
-                    sheet.write_number(row, 2, line['allocated_days'], num)
-                    sheet.write_number(row, 3, line['used_days'], num)
-                    sheet.write_number(row, 4, line['remaining_days'], num)
+                        row, col, group['name'] if first_line else '', cell)
+                    col += 1
+                    if wizard.group_by == 'employee' and show_hire_col:
+                        sheet.write(
+                            row, col,
+                            group['hire_label'] if first_line else '', cell)
+                        col += 1
+                    sheet.write(row, col, line['name'], cell)
+                    col += 1
+                    if wizard.group_by == 'leave_type' and show_hire_col:
+                        sheet.write(row, col, line['hire_label'], cell)
+                        col += 1
+                    sheet.write_number(row, col, line['allocated_days'], num)
+                    sheet.write_number(row, col + 1, line['used_days'], num)
+                    sheet.write_number(
+                        row, col + 2, line['remaining_days'], num)
                     first_line = False
                     row += 1
                 if len(groups) == 1 and len(group['breakdown']) > 1:
                     sheet.merge_range(
-                        row, 0, row, 1, '%s Toplamı' % group['name'], group_fmt)
+                        row, 0, row, label_cols - 1,
+                        '%s Toplamı' % group['name'], group_fmt)
                     sheet.write_number(
-                        row, 2, group['allocated_days'], num_bold)
+                        row, label_cols, group['allocated_days'], num_bold)
                     sheet.write_number(
-                        row, 3, group['summary_used_days'], num_bold)
+                        row, label_cols + 1, group['summary_used_days'],
+                        num_bold)
                     sheet.write_number(
-                        row, 4, group['summary_remaining_days'], num_bold)
+                        row, label_cols + 2, group['summary_remaining_days'],
+                        num_bold)
                     row += 1
                 total_alloc += group['allocated_days']
                 total_used += group['summary_used_days']
                 total_remaining += group['summary_remaining_days']
             if not wizard.department_id:
-                sheet.merge_range(row, 0, row, 1, 'Genel Toplam', header)
-                sheet.write_number(row, 2, total_alloc, num_bold)
-                sheet.write_number(row, 3, total_used, num_bold)
-                sheet.write_number(row, 4, total_remaining, num_bold)
+                sheet.merge_range(
+                    row, 0, row, label_cols - 1, 'Genel Toplam', header)
+                sheet.write_number(row, label_cols, total_alloc, num_bold)
+                sheet.write_number(row, label_cols + 1, total_used, num_bold)
+                sheet.write_number(
+                    row, label_cols + 2, total_remaining, num_bold)
             row += 2
 
             headers = ['Personel', 'Departman', 'İzin Türü',

@@ -7,6 +7,7 @@
                 <t t-call="web.external_layout">
                     <t t-set="groups" t-value="doc.get_grouped_lines()"/>
                     <t t-set="grand_total" t-value="sum(g['total_days'] for g in groups)"/>
+                    <t t-set="show_hire_col" t-value="doc.start_from_hire_date and len(doc.employee_ids) != 1"/>
                     <div class="page">
                         <h3>İzin Raporu</h3>
                         <p>
@@ -36,11 +37,13 @@
                                 <tr>
                                     <t t-if="doc.group_by == 'employee'">
                                         <th>Personel</th>
+                                        <th t-if="show_hire_col">İşe Giriş Tarihi</th>
                                         <th>İzin Türü</th>
                                     </t>
                                     <t t-else="">
                                         <th>İzin Türü</th>
                                         <th>Personel</th>
+                                        <th t-if="show_hire_col">İşe Giriş Tarihi</th>
                                     </t>
                                     <th class="text-end">Tahsis (Gün)</th>
                                     <th class="text-end">Kullanılan (Gün)</th>
@@ -51,16 +54,20 @@
                                 <t t-foreach="groups" t-as="group">
                                     <t t-foreach="group['breakdown']" t-as="line">
                                         <tr>
-                                            <td t-if="line_first"><t t-out="group['name']"/><t t-if="group['hire_label']"> (İşe Giriş: <t t-out="group['hire_label']"/>)</t></td>
+                                            <td t-if="line_first" t-out="group['name']"/>
                                             <td t-else=""/>
-                                            <td><t t-out="line['name']"/><t t-if="line['hire_label']"> (İşe Giriş: <t t-out="line['hire_label']"/>)</t></td>
+                                            <td t-if="show_hire_col and doc.group_by == 'employee'">
+                                                <t t-if="line_first" t-out="group['hire_label']"/>
+                                            </td>
+                                            <td t-out="line['name']"/>
+                                            <td t-if="show_hire_col and doc.group_by == 'leave_type'" t-out="line['hire_label']"/>
                                             <td class="text-end" t-out="'%.1f' % line['allocated_days']"/>
                                             <td class="text-end" t-out="'%.1f' % line['used_days']"/>
                                             <td class="text-end" t-out="'%.1f' % line['remaining_days']"/>
                                         </tr>
                                     </t>
                                     <tr t-if="len(groups) == 1 and len(group['breakdown']) > 1">
-                                        <td colspan="2" class="text-end">
+                                        <td t-attf-colspan="{{ 3 if show_hire_col else 2 }}" class="text-end">
                                             <strong t-out="'%s Toplamı' % group['name']"/>
                                         </td>
                                         <td class="text-end">
@@ -75,7 +82,7 @@
                                     </tr>
                                 </t>
                                 <tr t-if="not doc.department_id">
-                                    <td colspan="2"><strong>Genel Toplam</strong></td>
+                                    <td t-attf-colspan="{{ 3 if show_hire_col else 2 }}"><strong>Genel Toplam</strong></td>
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % sum(g['allocated_days'] for g in groups)"/>
                                     </td>
