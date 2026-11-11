@@ -9,8 +9,8 @@
         - PDF ve Excel (XLSX) çıktısı
         - İşten ayrılırken imzalatılabilen yıllık izin mutabakat formu
     """,
-    'author': 'Quanimo',
-    'website': 'https://www.quanimo.com',
+    'author': 'Projet İş Çözümleri Ltd. Şti.',
+    'website': 'https://projet.solutions',
     'category': 'Human Resources/Time Off',
     'version': '16.0.1.0.0',
     'depends': ['hr_holidays', 'report_xlsx'],

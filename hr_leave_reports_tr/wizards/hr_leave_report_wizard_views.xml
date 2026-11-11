@@ -7,10 +7,12 @@
             <form string="İzin Raporu">
                 <group>
                     <group>
-                        <field name="date_from"/>
+                        <field name="date_from" attrs="{'invisible': [('start_from_hire_date', '=', True)]}"/>
+                        <field name="start_from_hire_date"/>
                         <field name="date_to"/>
                         <field name="group_by" widget="radio"/>
                         <field name="state" widget="radio"/>
+                        <field name="show_description"/>
                     </group>
                     <group>
                         <field name="company_id" groups="base.group_multi_company"/>

@@ -11,8 +11,9 @@
                         <h3>İzin Raporu</h3>
                         <p>
                             <strong>Dönem:</strong>
-                            <span t-field="doc.date_from"/> -
-                            <span t-field="doc.date_to"/>
+                            <t t-if="doc.start_from_hire_date">İşe Girişten İtibaren</t>
+                            <t t-else=""><span t-field="doc.date_from"/></t>
+                            - <span t-field="doc.date_to"/>
                         </p>
                         <p>
                             <strong>Gruplama:</strong>
@@ -102,13 +103,13 @@
                                     <th>Bitiş</th>
                                     <th class="text-end">Gün</th>
                                     <th>Durum</th>
-                                    <th>Açıklama</th>
+                                    <th t-if="doc.show_description">Açıklama</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <t t-foreach="groups" t-as="group">
                                     <tr style="background-color: #f2f2f2;">
-                                        <td colspan="6">
+                                        <td t-attf-colspan="{{ 6 if doc.show_description else 5 }}">
                                             <strong t-out="group['name']"/>
                                         </td>
                                     </tr>
@@ -136,7 +137,7 @@
                                             <td>
                                                 <span t-field="leave.state"/>
                                             </td>
-                                            <td>
+                                            <td t-if="doc.show_description">
                                                 <span t-field="leave.name"/>
                                             </td>
                                         </tr>
@@ -148,7 +149,7 @@
                                         <td class="text-end">
                                             <strong t-out="'%.1f' % group['total_days']"/>
                                         </td>
-                                        <td colspan="2"/>
+                                        <td t-attf-colspan="{{ 2 if doc.show_description else 1 }}"/>
                                     </tr>
                                 </t>
                                 <tr>
@@ -158,7 +159,7 @@
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % grand_total"/>
                                     </td>
-                                    <td colspan="2"/>
+                                    <td t-attf-colspan="{{ 2 if doc.show_description else 1 }}"/>
                                 </tr>
                             </tbody>
                         </table>

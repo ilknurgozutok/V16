@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>İzin Raporları ve Yıllık İzin Mutabakatı - Kullanım Kılavuzu</title>
+<style>
+  @page { margin: 20mm 18mm; }
+  body {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt; color: #222; line-height: 1.55; margin: 0;
+  }
+  h1 { font-size: 20pt; color: #1a3a5c; border-bottom: 3px solid #1a3a5c;
+       padding-bottom: 8px; margin-bottom: 4px; }
+  h2 { font-size: 14pt; color: #1a3a5c; margin-top: 26px;
+       border-bottom: 1px solid #cdd8e4; padding-bottom: 4px; }
+  h3 { font-size: 11.5pt; color: #2a5a8c; margin-top: 18px; }
+  .subtitle { color: #666; font-size: 10pt; margin-bottom: 30px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #c5cdd6; padding: 6px 9px; text-align: left;
+           font-size: 10pt; vertical-align: top; }
+  th { background: #eef3f8; }
+  code, .field { background: #f0f2f5; padding: 1px 5px; border-radius: 3px;
+                 font-family: Consolas, monospace; font-size: 9.5pt; }
+  .note { background: #fff8e1; border-left: 4px solid #f0b429;
+          padding: 8px 12px; margin: 12px 0; }
+  .tip { background: #e8f4ea; border-left: 4px solid #3d9970;
+         padding: 8px 12px; margin: 12px 0; }
+  ul { margin: 6px 0 12px 0; }
+  li { margin-bottom: 4px; }
+  .step { font-weight: 600; color: #1a3a5c; }
+</style>
+</head>
+<body>
+
+<h1>İzin Raporları ve Yıllık İzin Mutabakatı</h1>
+<p class="subtitle">Kullanım Kılavuzu &mdash; Modül: <code>hr_leave_reports_tr</code> (Odoo 16)</p>
+
+<h2>1. Genel Bakış</h2>
+<p>Bu modül, İzinler (Time Off) uygulamasına iki raporlama aracı ekler:</p>
+<ul>
+  <li><strong>İzin Raporu:</strong> Seçilen dönem, personel, departman ve izin türü
+  filtreleriyle izin kullanımını ve tahsis bakiyelerini PDF veya Excel olarak raporlar.</li>
+  <li><strong>Yıllık İzin Mutabakat Formu:</strong> İşten ayrılma veya dönem sonu
+  mutabakatları için, personelin tüm çalışma dönemine ait izin bakiyesini gösteren
+  imzalık PDF formu üretir.</li>
+</ul>
+<p>Raporlara <strong>İzinler &rarr; Raporlama</strong> menüsünden ulaşılır.
+Ayrıca mutabakat formu personel kartı üzerindeki <strong>Eylem</strong> menüsünden de açılabilir.
+Raporları yalnızca <em>İzinler / Yönetici (Officer)</em> yetkisine sahip kullanıcılar çalıştırabilir.</p>
+
+<h2>2. İzin Raporu</h2>
+<p><strong>Menü:</strong> İzinler &rarr; Raporlama &rarr; İzin Raporu</p>
+
+<h3>2.1 Sihirbaz Alanları</h3>
+<table>
+  <tr><th>Alan</th><th>Açıklama</th></tr>
+  <tr><td class="field">Başlangıç / Bitiş Tarihi</td>
+      <td>Rapor dönemi. Varsayılan: yıl başı &ndash; bugün.</td></tr>
+  <tr><td class="field">Gruplama</td>
+      <td><strong>Personel Bazlı:</strong> Her personelin altında izin türü kırılımı.<br>
+          <strong>İzin Türü Bazlı:</strong> Her izin türünün altında personel kırılımı.</td></tr>
+  <tr><td class="field">Durum</td>
+      <td><strong>Onaylanmış:</strong> Yalnızca onaylı izinler.<br>
+          <strong>Tümü:</strong> İptal ve reddedilenler hariç tüm kayıtlar.</td></tr>
+  <tr><td class="field">Şirket</td>
+      <td>Yalnızca çok şirketli kurulumlarda görünür.</td></tr>
+  <tr><td class="field">Departman</td>
+      <td>Seçilirse yalnızca o departman (ve alt departmanları) raporlanır.</td></tr>
+  <tr><td class="field">İzin Türleri</td>
+      <td>Birden fazla tür seçilebilir. Boş bırakılırsa tüm türler dahildir.</td></tr>
+  <tr><td class="field">Personeller</td>
+      <td>Birden fazla personel seçilebilir. Boş bırakılırsa şirketteki tüm personel dahildir.</td></tr>
+</table>
+<p><span class="field">PDF</span> ve <span class="field">Excel</span> butonları
+aynı veriyi iki formatta üretir.</p>
+
+<h3>2.2 Rapor Yapısı</h3>
+<p><strong>Özet tablosu</strong> (raporun üst bölümü): Gruplamanın ters boyutunda
+kırılımlı satırlar içerir &mdash; personel bazlı raporda her personelin izin türleri,
+izin türü bazlı raporda her türün personelleri.</p>
+<table>
+  <tr><th>Sütun</th><th>Anlamı</th></tr>
+  <tr><td class="field">Tahsis (Gün)</td>
+      <td>Döneme ait onaylı izin tahsisi. Tahsis, başlangıç tarihinin (<code>date_from</code>)
+          yılına yazılır; süresiz tahsisler her yıla tekrar sayılmaz.</td></tr>
+  <tr><td class="field">Kullanılan (Gün)</td>
+      <td>Dönem içinde kullanılan izin günü.</td></tr>
+  <tr><td class="field">Kalan (Gün)</td>
+      <td>Tahsis &minus; Kullanılan. Yalnızca tahsisatı olan izin türleri listelenir.</td></tr>
+</table>
+<ul>
+  <li>Tek grup raporlandığında grup toplam satırı da görünür; çoklu seçimde yalnızca
+      genel toplam satırı vardır.</li>
+  <li>Departman filtresi seçiliyken özet tabloda genel toplam satırı gösterilmez.</li>
+</ul>
+<p><strong>İzin Kullanım Detayı</strong> (alt bölüm): Dönemdeki tüm izin kayıtlarını
+başlangıç/bitiş tarihi, gün, durum ve açıklama bilgisiyle listeler. Ara toplam ve
+genel toplam satırları kullanılan izin gününü gösterir.</p>
+
+<div class="tip"><strong>İpucu:</strong> Personel bazlı toplu rapor için
+<span class="field">Personeller</span> alanını boş bırakıp
+<span class="field">İzin Türleri</span> alanını da boş bırakın &mdash; tüm personel
+ve tüm izin türleri tek raporda gelir.</div>
+
+<h2>3. Yıllık İzin Mutabakat Formu</h2>
+<p><strong>Menü:</strong> İzinler &rarr; Raporlama &rarr; Yıllık İzin Mutabakatı<br>
+<strong>veya</strong> Çalışanlar &rarr; personel kartı &rarr; Eylem &rarr;
+Yıllık İzin Mutabakat Formu (personel otomatik seçili gelir).</p>
+
+<h3>3.1 Sihirbaz Alanları</h3>
+<table>
+  <tr><th>Alan</th><th>Açıklama</th></tr>
+  <tr><td class="field">Personel</td>
+      <td>Mutabakat yapılacak tek personel.</td></tr>
+  <tr><td class="field">İzin Türü</td>
+      <td>Varsayılan olarak &ldquo;Yıllık İzin&rdquo; türü gelir; başka bir tür de seçilebilir.</td></tr>
+  <tr><td class="field">Yıl</td>
+      <td>Mutabakat yılı. Üstteki bakiye tablosu bu yıla aittir; yıl bazında özet
+          ise işe başlangıçtan bu yıla kadar uzanır.</td></tr>
+  <tr><td class="field">Mutabakat Tarihi</td>
+      <td>Formun düzenlendiği (imzalanacağı) tarih.</td></tr>
+</table>
+
+<h3>3.2 Form İçeriği</h3>
+<ul>
+  <li><strong>Personel bilgileri:</strong> Ad, departman, görev, işe giriş tarihi,
+      (varsa) işten ayrılış tarihi ve mutabakat tarihi.</li>
+  <li><strong>Yıl bakiyesi tablosu:</strong>
+      <em>Önceki Dönemden Devir + Hak Edilen İzin &minus; Kullanılan İzin = Kalan İzin</em>.
+      Devir, önceki yılların kümülatif net bakiyesidir.</li>
+  <li><strong>Yıl Bazında Özet:</strong> İşe başlangıç yılından (en eski tahsis/izin
+      kaydından) seçilen yıla kadar her yıl için tahsis, kullanılan ve kümülatif kalan.
+      Alt satırda toplam izin hakkı gösterilir.</li>
+  <li><strong>Mutabakat beyanı ve imza blokları:</strong> Çalışan ve işveren/İK
+      temsilcisi için imza alanları içerir.</li>
+</ul>
+
+<h3>3.3 Hesaplama Kuralları</h3>
+<ul>
+  <li>Tahsisler, başlangıç tarihlerinin (<code>date_from</code>) bulunduğu yıla yazılır.
+      Hatalı başlangıç tarihli tahsisler (örn. işe girişten önceki yıllara tarihlenmiş
+      kayıtlar) kendi yıllarında görünür &mdash; bu, veri düzeltmesi gerektiren
+      kayıtların raporda fark edilmesini sağlar.</li>
+  <li>Yalnızca <strong>onaylı</strong> izin ve tahsis kayıtları hesaba katılır;
+      reddedilen ve iptal edilen kayıtlar sayılmaz.</li>
+  <li>Devir tutarı, yıl bazında özet tablosundaki kümülatif kalan ile tutarlıdır.</li>
+</ul>
+
+<div class="note"><strong>Not:</strong> Personelin işe girişinden önceki yıla
+tarihlenmiş bir tahsis görürseniz (örn. 2023'te işe başlayan personel için 2020
+tarihli tahsis), kayıttaki başlangıç tarihini düzelttikten sonra raporu yeniden alın.</div>
+
+<h2>4. Sık Sorulanlar</h2>
+<table>
+  <tr><th>Soru</th><th>Yanıt</th></tr>
+  <tr><td>İzin raporunda bir personel neden görünmüyor?</td>
+      <td>Özet tabloda yalnızca dönemde izin kaydı veya tahsisi olan kayıtlar;
+          detay tabloda yalnızca izin kaydı olanlar listelenir. Filtreleri
+          (departman, izin türü, durum) kontrol edin.</td></tr>
+  <tr><td>Özet tabloda bir izin türü neden yok?</td>
+      <td>Özet yalnızca tahsisatı olan izin türlerini gösterir. Tahsis gerektirmeyen
+          türlerdeki kullanımlar yalnızca İzin Kullanım Detayı bölümünde görünür.</td></tr>
+  <tr><td>Mutabakat devir tutarı nereden geliyor?</td>
+      <td>Seçilen yıldan önceki tüm yılların (tahsis &minus; kullanılan) toplamıdır;
+          yıl bazında özet tablosundaki bir önceki yılın kalanına eşittir.</td></tr>
+  <tr><td>Excel çıktısı almak için ek kurulum gerekir mi?</td>
+      <td>Hayır &mdash; modül, kurulu olan <code>report_xlsx</code> altyapısını kullanır.</td></tr>
+</table>
+
+<h2>5. Yetkilendirme</h2>
+<ul>
+  <li>Her iki rapor da <strong>İzinler &rarr; Yönetici (Officer)</strong> grubuna
+      verilidir; bu yetkiye sahip olmayan kullanıcılar menüleri göremez.</li>
+  <li>Raporlar veritabanına yazmaz; yalnızca mevcut izin ve tahsis kayıtlarını okur.</li>
+</ul>
+
+</body>
+</html>

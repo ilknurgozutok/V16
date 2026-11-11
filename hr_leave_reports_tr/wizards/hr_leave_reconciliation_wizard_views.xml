@@ -31,6 +31,7 @@
         <field name="name">Yıllık İzin Mutabakat Formu</field>
         <field name="model_id" ref="hr.model_hr_employee"/>
         <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="groups_id" eval="[(4, ref('hr_holidays.group_hr_holidays_user'))]"/>
         <field name="state">code</field>
         <field name="code">
 wizard = env['hr.leave.reconciliation.wizard'].create({

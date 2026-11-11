@@ -27,7 +27,8 @@ class LeaveReportXlsx(models.AbstractModel):
             sheet.write(0, 0, 'İzin Raporu', title)
             sheet.write(1, 0, 'Dönem', subtitle)
             sheet.write(1, 1, '%s - %s' % (
-                wizard.date_from.strftime('%d/%m/%Y'),
+                'İşe Girişten İtibaren' if wizard.start_from_hire_date
+                else wizard.date_from.strftime('%d/%m/%Y'),
                 wizard.date_to.strftime('%d/%m/%Y')))
             sheet.write(2, 0, 'Gruplama', subtitle)
             sheet.write(2, 1, dict(wizard._fields['group_by'].selection)
@@ -80,7 +81,9 @@ class LeaveReportXlsx(models.AbstractModel):
             row += 2
 
             headers = ['Personel', 'Departman', 'İzin Türü',
-                       'Başlangıç', 'Bitiş', 'Gün', 'Durum', 'Açıklama']
+                       'Başlangıç', 'Bitiş', 'Gün', 'Durum']
+            if wizard.show_description:
+                headers.append('Açıklama')
             sheet.write(row, 0, 'İzin Kullanım Detayı', group_fmt)
             row += 1
             for col, label in enumerate(headers):
@@ -109,7 +112,8 @@ class LeaveReportXlsx(models.AbstractModel):
                         .strftime('%d/%m/%Y'), cell)
                     sheet.write_number(row, 5, leave.number_of_days, num)
                     sheet.write(row, 6, states.get(leave.state, ''), cell)
-                    sheet.write(row, 7, leave.name or '', cell)
+                    if wizard.show_description:
+                        sheet.write(row, 7, leave.name or '', cell)
                     row += 1
                 sheet.merge_range(
                     row, 0, row, 4,

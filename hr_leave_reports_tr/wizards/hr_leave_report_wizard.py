@@ -14,6 +14,10 @@ class HrLeaveReportWizard(models.TransientModel):
 
     date_from = fields.Date(
         string='Başlangıç Tarihi', required=True, default=_default_date_from)
+    start_from_hire_date = fields.Boolean(
+        string='İşe Girişten İtibaren',
+        help='İşaretliyse her personel kendi işe giriş tarihinden itibaren '
+             'raporlanır; başlangıç tarihi alanı yok sayılır.')
     date_to = fields.Date(
         string='Bitiş Tarihi', required=True,
         default=fields.Date.context_today)
@@ -32,6 +36,9 @@ class HrLeaveReportWizard(models.TransientModel):
         ('validate', 'Onaylanmış'),
         ('all', 'Tümü (İptal/Reddedilen hariç)'),
     ], string='Durum', default='validate', required=True)
+    show_description = fields.Boolean(
+        string='Açıklamaları Göster',
+        help='İşaretliyse detay tablosunda izin açıklamaları da listelenir.')
     company_id = fields.Many2one(
         'res.company', string='Şirket', required=True,
         default=lambda self: self.env.company)
@@ -43,13 +50,38 @@ class HrLeaveReportWizard(models.TransientModel):
                 raise ValidationError(_(
                     'Başlangıç tarihi bitiş tarihinden sonra olamaz.'))
 
+    def _get_employee_start(self, employee):
+        """'İşe Girişten İtibaren' açıkken personelin etkin dönem başlangıcı."""
+        self.ensure_one()
+        if not self.start_from_hire_date:
+            return self.date_from
+        if 'first_contract_date' in employee._fields \
+                and employee.first_contract_date:
+            return fields.Date.to_date(employee.first_contract_date)
+        return self.date_from
+
+    def _get_target_employees(self):
+        self.ensure_one()
+        if self.employee_ids:
+            return self.employee_ids
+        domain = [('company_id', '=', self.company_id.id)]
+        if self.department_id:
+            domain.append(
+                ('department_id', 'child_of', self.department_id.id))
+        return self.env['hr.employee'].search(domain)
+
     def _get_leave_domain(self):
         self.ensure_one()
+        floor = self.date_from
+        if self.start_from_hire_date:
+            starts = [self._get_employee_start(emp)
+                      for emp in self._get_target_employees()]
+            floor = min(starts) if starts else self.date_from
         domain = [
             ('employee_id.company_id', '=', self.company_id.id),
             ('request_date_from', '<=', self.date_to),
             '|', ('request_date_to', '=', False),
-            ('request_date_to', '>=', self.date_from),
+            ('request_date_to', '>=', floor),
         ]
         if self.employee_ids:
             domain.append(('employee_id', 'in', self.employee_ids.ids))
@@ -96,7 +128,7 @@ class HrLeaveReportWizard(models.TransientModel):
         allocations = self.env['hr.leave.allocation'].search(
             self._get_allocation_domain())
         return allocations.filtered(
-            lambda a: self.date_from.year
+            lambda a: self._get_employee_start(a.employee_id).year
             <= self._get_allocation_year(a) <= self.date_to.year)
 
     def _get_leaves(self):
@@ -114,6 +146,10 @@ class HrLeaveReportWizard(models.TransientModel):
             else 'employee_id'
         leaves = self._get_leaves()
         allocations = self._get_allocations()
+        if self.start_from_hire_date:
+            leaves = leaves.filtered(
+                lambda l: (l.request_date_to or l.request_date_from)
+                >= self._get_employee_start(l.employee_id))
         groups = OrderedDict()
         for leave in leaves:
             groups.setdefault(leave[key_field], self.env['hr.leave'])

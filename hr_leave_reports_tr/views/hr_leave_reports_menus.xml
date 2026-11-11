@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_leave_reports_root"
-              name="Raporlar"
-              parent="hr_holidays.menu_hr_holidays_root"
-              sequence="90"/>
     <menuitem id="menu_leave_report_wizard"
               name="İzin Raporu"
-              parent="menu_leave_reports_root"
+              parent="hr_holidays.menu_hr_holidays_report"
+              groups="hr_holidays.group_hr_holidays_user"
               action="action_leave_report_wizard"
-              sequence="10"/>
+              sequence="20"/>
     <menuitem id="menu_leave_reconciliation_wizard"
               name="Yıllık İzin Mutabakatı"
-              parent="menu_leave_reports_root"
+              parent="hr_holidays.menu_hr_holidays_report"
+              groups="hr_holidays.group_hr_holidays_user"
               action="action_leave_reconciliation_wizard"
-              sequence="20"/>
+              sequence="30"/>
 </odoo>
