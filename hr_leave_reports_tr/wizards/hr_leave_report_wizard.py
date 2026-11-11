@@ -123,13 +123,16 @@ class HrLeaveReportWizard(models.TransientModel):
 
     def _get_allocations(self):
         """Seçilen döneme ait tahsisler: tahsisin ait olduğu yıl dönemin
-        yıl aralığı içinde olmalı (süresiz tahsisler her yıla sayılmaz)."""
+        yıl aralığı içinde olmalı (süresiz tahsisler her yıla sayılmaz).
+        'İşe Girişten İtibaren' modunda tahsisler işe giriş filtresine tabi
+        değildir; personelin tüm onaylı tahsisleri sayılır."""
         self.ensure_one()
         allocations = self.env['hr.leave.allocation'].search(
             self._get_allocation_domain())
         return allocations.filtered(
-            lambda a: self._get_employee_start(a.employee_id).year
-            <= self._get_allocation_year(a) <= self.date_to.year)
+            lambda a: self._get_allocation_year(a) <= self.date_to.year
+            and (self.start_from_hire_date
+                 or self._get_allocation_year(a) >= self.date_from.year))
 
     def _get_leaves(self):
         self.ensure_one()
