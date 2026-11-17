@@ -236,11 +236,12 @@ class TestLeaveReports(TestLeaveReportsCommon):
             [self.leave_type])
 
     def test_short_period_uses_full_year_allocation(self):
-        """Kısa dönemde tahsis yılın tamamından gelir, kullanım dönemden."""
+        """Özet birikimlidir: geçerliliği başlamış tüm tahsisler sayılır;
+        kullanım detayı ise seçilen dönemi listeler."""
         wizard = self._report_wizard(
             date_from=date(2026, 3, 1), date_to=date(2026, 3, 31))
         group = wizard.get_grouped_lines()[0]
-        self.assertAlmostEqual(group['allocated_days'], 14)
+        self.assertAlmostEqual(group['allocated_days'], 28)
         self.assertEqual(group['leaves'], self.leave_2026)
 
     def test_grand_total_visible_with_department_filter(self):
