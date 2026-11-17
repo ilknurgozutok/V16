@@ -190,11 +190,23 @@ class HrLeaveReportWizard(models.TransientModel):
             allocated = sum(group_allocations.mapped('number_of_days'))
             used = sum(leaves.mapped('number_of_days'))
             # Bilinçli tasarım: özet tablo kalan izin haklarını göstermek
-            # içindir; yalnızca tahsisi olan izin türleri/personeller yer
-            # alır. Tahsissiz izinler (mazeret, rapor vb.) toplu raporlarda
+            # içindir; 'tahsisat gerektirir' olan izin türleri takip edilir.
+            # Tahsis kaydı olmasa da bu türlerde birikimli kullanımı olan
+            # satırlar Tahsis 0 / negatif Kalan ile görünür; tahsis
+            # gerektirmeyen türler (mazeret, rapor vb.) toplu raporlarda
             # özeti karıştırdığı için yalnızca detay tablosunda listelenir.
-            breakdown_records = group_allocations.mapped(
-                breakdown_field).sorted('name')
+            breakdown_records = group_allocations.mapped(breakdown_field)
+            usage_records = summary_leaves.filtered(
+                lambda l: l[key_field] == record).mapped(breakdown_field)
+            if self.group_by == 'employee':
+                tracked = usage_records.filtered(
+                    lambda lt: lt.requires_allocation == 'yes')
+            elif record.requires_allocation == 'yes':
+                tracked = usage_records
+            else:
+                tracked = self.env['hr.employee']
+            breakdown_records = (
+                breakdown_records | tracked).sorted('name')
             breakdown = []
             for brecord in breakdown_records:
                 b_leaves = summary_leaves.filtered(
