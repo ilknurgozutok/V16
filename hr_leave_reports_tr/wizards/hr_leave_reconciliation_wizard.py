@@ -3,6 +3,9 @@ from datetime import date
 
 from odoo import fields, models
 
+from .leave_report_common import (
+    get_allocation_year, get_employee_private_date, get_hire_date)
+
 
 class HrLeaveReconciliationWizard(models.TransientModel):
     _name = 'hr.leave.reconciliation.wizard'
@@ -41,25 +44,32 @@ class HrLeaveReconciliationWizard(models.TransientModel):
 
     @staticmethod
     def _get_allocation_year(allocation):
-        """Tahsisin ait olduğu yıl: geçerlilik başlangıç (date_from) yılı."""
-        start = fields.Date.to_date(allocation.date_from)
-        if start:
-            return start.year
-        return allocation.create_date.year
+        return get_allocation_year(allocation)
+
+    def _get_valid_allocations(self):
+        """Mutabakat tarihine kadar geçerliliği başlamış onaylı tahsisler.
+        Geçerlilik başlangıcı (date_from) mutabakat tarihinden sonra olan
+        tahsisler henüz hak doğurmadığı için sayılmaz."""
+        self.ensure_one()
+        return self._get_all_allocations().filtered(
+            lambda a: not a.date_from
+            or fields.Date.to_date(a.date_from)
+            <= self.reconciliation_date)
 
     def _get_leaves_in_period(self, period_start, period_end):
+        """Dönemde başlayan onaylı izinler. İzin başladığı yıla sayılır;
+        yıl sınırını aşan bir izin iki yılın bakiyesinden birden düşülmez."""
         return self.env['hr.leave'].search([
             ('employee_id', '=', self.employee_id.id),
             ('holiday_status_id', '=', self.holiday_status_id.id),
             ('state', '=', 'validate'),
+            ('request_date_from', '>=', period_start),
             ('request_date_from', '<=', period_end),
-            '|', ('request_date_to', '=', False),
-            ('request_date_to', '>=', period_start),
         ], order='request_date_from')
 
     def _get_year_allocations(self):
         self.ensure_one()
-        return self._get_all_allocations().filtered(
+        return self._get_valid_allocations().filtered(
             lambda a: self._get_allocation_year(a) == self.year)
 
     def _get_year_leaves(self):
@@ -73,8 +83,9 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         self.ensure_one()
         emp = self.employee_id
         years = []
-        if 'first_contract_date' in emp._fields and emp.first_contract_date:
-            years.append(emp.first_contract_date.year)
+        hire_date = get_hire_date(emp)
+        if hire_date:
+            years.append(hire_date.year)
         first_leave = self.env['hr.leave'].search([
             ('employee_id', '=', emp.id),
             ('holiday_status_id', '=', self.holiday_status_id.id),
@@ -97,7 +108,7 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         tahsis/kullanılan satırları ve kümülatif kalan bakiye."""
         self.ensure_one()
         allocated_by_year = {}
-        for allocation in self._get_all_allocations():
+        for allocation in self._get_valid_allocations():
             year = self._get_allocation_year(allocation)
             allocated_by_year[year] = allocated_by_year.get(year, 0.0) \
                 + allocation.number_of_days
@@ -130,6 +141,9 @@ class HrLeaveReconciliationWizard(models.TransientModel):
             line['allocated'] - line['used']
             for line in yearly_summary if line['year'] < self.year)
         return {
+            'hire_date': get_hire_date(self.employee_id),
+            'departure_date': get_employee_private_date(
+                self.employee_id, 'departure_date'),
             'start_year': yearly_summary and
                 yearly_summary[0]['year'] or self.year,
             'carryover': carryover,

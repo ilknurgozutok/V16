@@ -12,7 +12,7 @@
     'author': 'Projet İş Çözümleri Ltd. Şti.',
     'website': 'https://projet.solutions',
     'category': 'Human Resources/Time Off',
-    'version': '16.0.1.0.0',
+    'version': '16.0.1.0.1',
     'depends': ['hr_holidays', 'report_xlsx'],
     'data': [
         'security/ir.model.access.csv',

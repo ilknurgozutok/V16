@@ -81,7 +81,7 @@
                                         </td>
                                     </tr>
                                 </t>
-                                <tr t-if="not doc.department_id">
+                                <tr>
                                     <td t-attf-colspan="{{ 3 if show_hire_col else 2 }}"><strong>Genel Toplam</strong></td>
                                     <td class="text-end">
                                         <strong t-out="'%.1f' % sum(g['allocated_days'] for g in groups)"/>
@@ -202,11 +202,11 @@
                                 </tr>
                                 <tr t-if="'first_contract_date' in emp._fields">
                                     <td><strong>İşe Giriş Tarihi</strong></td>
-                                    <td><span t-field="emp.first_contract_date"/></td>
+                                    <td><t t-if="data['hire_date']" t-out="data['hire_date']" t-options="{'widget': 'date'}"/></td>
                                 </tr>
-                                <tr t-if="'departure_date' in emp._fields and emp.departure_date">
+                                <tr t-if="data['departure_date']">
                                     <td><strong>İşten Ayrılış Tarihi</strong></td>
-                                    <td><span t-field="emp.departure_date"/></td>
+                                    <td><t t-out="data['departure_date']" t-options="{'widget': 'date'}"/></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Mutabakat Tarihi</strong></td>
@@ -272,8 +272,8 @@
                         <br/>
                         <p>
                             Yukarıda yer alan tabloda, <span t-field="company.name"/> nezdinde
-                            <t t-if="'first_contract_date' in emp._fields and emp.first_contract_date">
-                                işe başlangıç tarihim olan <span t-field="emp.first_contract_date"/>
+                            <t t-if="data['hire_date']">
+                                işe başlangıç tarihim olan <t t-out="data['hire_date']" t-options="{'widget': 'date'}"/>
                             </t>
                             <t t-else="">işe başlangıç tarihim</t>
                             itibariyle oluşan

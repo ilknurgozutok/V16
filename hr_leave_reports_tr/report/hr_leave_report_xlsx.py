@@ -19,8 +19,10 @@ class LeaveReportXlsx(models.AbstractModel):
         num_bold = workbook.add_format(
             {'border': 1, 'num_format': '0.0', 'bold': True})
 
-        for wizard in wizards:
-            sheet = workbook.add_worksheet('İzin Raporu')
+        for index, wizard in enumerate(wizards, start=1):
+            sheet = workbook.add_worksheet(
+                'İzin Raporu' if len(wizards) == 1
+                else 'İzin Raporu %d' % index)
             for col, width in enumerate([28, 20, 22, 12, 12, 8, 14, 30]):
                 sheet.set_column(col, col, width)
 
@@ -102,13 +104,12 @@ class LeaveReportXlsx(models.AbstractModel):
                 total_alloc += group['allocated_days']
                 total_used += group['summary_used_days']
                 total_remaining += group['summary_remaining_days']
-            if not wizard.department_id:
-                sheet.merge_range(
-                    row, 0, row, label_cols - 1, 'Genel Toplam', header)
-                sheet.write_number(row, label_cols, total_alloc, num_bold)
-                sheet.write_number(row, label_cols + 1, total_used, num_bold)
-                sheet.write_number(
-                    row, label_cols + 2, total_remaining, num_bold)
+            sheet.merge_range(
+                row, 0, row, label_cols - 1, 'Genel Toplam', header)
+            sheet.write_number(row, label_cols, total_alloc, num_bold)
+            sheet.write_number(row, label_cols + 1, total_used, num_bold)
+            sheet.write_number(
+                row, label_cols + 2, total_remaining, num_bold)
             row += 2
 
             headers = ['Personel', 'Departman', 'İzin Türü',

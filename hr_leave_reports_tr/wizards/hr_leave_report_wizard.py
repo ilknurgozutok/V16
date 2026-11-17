@@ -5,6 +5,8 @@ from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError
 from odoo.tools.misc import format_date
 
+from .leave_report_common import get_allocation_year, get_hire_date
+
 
 class HrLeaveReportWizard(models.TransientModel):
     _name = 'hr.leave.report.wizard'
@@ -18,7 +20,8 @@ class HrLeaveReportWizard(models.TransientModel):
     start_from_hire_date = fields.Boolean(
         string='İşe Girişten İtibaren',
         help='İşaretliyse her personel kendi işe giriş tarihinden itibaren '
-             'raporlanır; başlangıç tarihi alanı yok sayılır.')
+             'raporlanır; başlangıç tarihi alanı yok sayılır. İşe giriş '
+             'tarihi olmayan personelin tüm geçmişi raporlanır.')
     date_to = fields.Date(
         string='Bitiş Tarihi', required=True,
         default=fields.Date.context_today)
@@ -44,29 +47,31 @@ class HrLeaveReportWizard(models.TransientModel):
         'res.company', string='Şirket', required=True,
         default=lambda self: self.env.company)
 
-    @api.constrains('date_from', 'date_to')
+    @api.constrains('date_from', 'date_to', 'start_from_hire_date')
     def _check_dates(self):
         for wizard in self:
-            if wizard.date_from > wizard.date_to:
+            # 'İşe Girişten İtibaren' modunda başlangıç tarihi gizli ve
+            # kullanılmıyor; görünmeyen alan için hata verilmez.
+            if not wizard.start_from_hire_date \
+                    and wizard.date_from > wizard.date_to:
                 raise ValidationError(_(
                     'Başlangıç tarihi bitiş tarihinden sonra olamaz.'))
 
     def _get_employee_start(self, employee):
-        """'İşe Girişten İtibaren' açıkken personelin etkin dönem başlangıcı."""
+        """Personelin etkin dönem başlangıcı. 'İşe Girişten İtibaren'
+        modunda işe giriş tarihi; işe giriş tarihi yoksa alt sınır yoktur
+        (False döner, personelin tüm geçmişi raporlanır)."""
         self.ensure_one()
         if not self.start_from_hire_date:
             return self.date_from
-        if 'first_contract_date' in employee._fields \
-                and employee.first_contract_date:
-            return fields.Date.to_date(employee.first_contract_date)
-        return self.date_from
+        return get_hire_date(employee)
 
     def _get_employee_start_label(self, employee):
         """Rapor çıktısında gösterilecek işe giriş tarihi etiketi."""
         self.ensure_one()
-        if 'first_contract_date' in employee._fields \
-                and employee.first_contract_date:
-            return format_date(self.env, employee.first_contract_date)
+        hire_date = get_hire_date(employee)
+        if hire_date:
+            return format_date(self.env, hire_date)
         return _('tarih yok')
 
     def _start_label(self, record):
@@ -75,29 +80,18 @@ class HrLeaveReportWizard(models.TransientModel):
             return self._get_employee_start_label(record)
         return ''
 
-    def _get_target_employees(self):
-        self.ensure_one()
-        if self.employee_ids:
-            return self.employee_ids
-        domain = [('company_id', '=', self.company_id.id)]
-        if self.department_id:
-            domain.append(
-                ('department_id', 'child_of', self.department_id.id))
-        return self.env['hr.employee'].search(domain)
-
     def _get_leave_domain(self):
+        """İzinler başladıkları tarihe göre döneme atanır: dönem sınırını
+        aşan bir izin, ardışık dönemlerde iki kez sayılmaz. 'İşe Girişten
+        İtibaren' modunda alt sınır personel bazında get_grouped_lines
+        içinde uygulanır."""
         self.ensure_one()
-        floor = self.date_from
-        if self.start_from_hire_date:
-            starts = [self._get_employee_start(emp)
-                      for emp in self._get_target_employees()]
-            floor = min(starts) if starts else self.date_from
         domain = [
             ('employee_id.company_id', '=', self.company_id.id),
             ('request_date_from', '<=', self.date_to),
-            '|', ('request_date_to', '=', False),
-            ('request_date_to', '>=', floor),
         ]
+        if not self.start_from_hire_date:
+            domain.append(('request_date_from', '>=', self.date_from))
         if self.employee_ids:
             domain.append(('employee_id', 'in', self.employee_ids.ids))
         if self.department_id:
@@ -130,22 +124,31 @@ class HrLeaveReportWizard(models.TransientModel):
 
     @staticmethod
     def _get_allocation_year(allocation):
-        """Tahsisin ait olduğu yıl: geçerlilik başlangıç (date_from) yılı."""
-        start = fields.Date.to_date(allocation.date_from)
-        if start:
-            return start.year
-        return allocation.create_date.year
+        return get_allocation_year(allocation)
 
     def _get_allocations(self):
         """Seçilen döneme ait tahsisler: tahsisin ait olduğu yıl dönemin
         yıl aralığı içinde olmalı (süresiz tahsisler her yıla sayılmaz).
         'İşe Girişten İtibaren' modunda tahsisler işe giriş filtresine tabi
-        değildir; personelin tüm onaylı tahsisleri sayılır."""
+        değildir; personelin tüm onaylı tahsisleri sayılır.
+
+        Bilinçli tasarım: tahsisler tarih aralığına göre kırpılmaz, dönemin
+        kapsadığı takvim yıllarının tamamı alınır. Tahsisler sonraki yıllara
+        aktarıldığından, kırpılırsa kısa bir dönem seçildiğinde kalan gün
+        hatalı hesaplanıyordu. Kullanım detayı ise seçilen döneme göredir.
+        Hizmet yılı yerine takvim yılı kullanılması da geçmişte geçerlilik
+        başlangıcı hatalı girilmiş tahsisler nedeniyle bilinçli bir
+        tercihtir.
+
+        Ek kural: geçerlilik başlangıcı (date_from) rapor bitiş
+        tarihinden sonra olan tahsisler sayılmaz; hak henüz doğmamıştır."""
         self.ensure_one()
         allocations = self.env['hr.leave.allocation'].search(
             self._get_allocation_domain())
         return allocations.filtered(
             lambda a: self._get_allocation_year(a) <= self.date_to.year
+            and (not a.date_from
+                 or fields.Date.to_date(a.date_from) <= self.date_to)
             and (self.start_from_hire_date
                  or self._get_allocation_year(a) >= self.date_from.year))
 
@@ -165,9 +168,12 @@ class HrLeaveReportWizard(models.TransientModel):
         leaves = self._get_leaves()
         allocations = self._get_allocations()
         if self.start_from_hire_date:
+            starts = {}
+            for employee in leaves.employee_id:
+                starts[employee.id] = self._get_employee_start(employee)
             leaves = leaves.filtered(
-                lambda l: (l.request_date_to or l.request_date_from)
-                >= self._get_employee_start(l.employee_id))
+                lambda l: not starts[l.employee_id.id]
+                or l.request_date_from >= starts[l.employee_id.id])
         groups = OrderedDict()
         for leave in leaves:
             groups.setdefault(leave[key_field], self.env['hr.leave'])
@@ -181,6 +187,10 @@ class HrLeaveReportWizard(models.TransientModel):
                 lambda a: a[key_field] == record)
             allocated = sum(group_allocations.mapped('number_of_days'))
             used = sum(leaves.mapped('number_of_days'))
+            # Bilinçli tasarım: özet tablo kalan izin haklarını göstermek
+            # içindir; yalnızca tahsisi olan izin türleri/personeller yer
+            # alır. Tahsissiz izinler (mazeret, rapor vb.) toplu raporlarda
+            # özeti karıştırdığı için yalnızca detay tablosunda listelenir.
             breakdown_records = group_allocations.mapped(
                 breakdown_field).sorted('name')
             breakdown = []
