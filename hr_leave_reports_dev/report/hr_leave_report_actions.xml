@@ -4,8 +4,8 @@
         <field name="name">İzin Raporu</field>
         <field name="model">hr.leave.report.wizard</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">hr_leave_reports_tr.report_leave_document</field>
-        <field name="report_file">hr_leave_reports_tr.report_leave_document</field>
+        <field name="report_name">hr_leave_reports_dev.report_leave_document</field>
+        <field name="report_file">hr_leave_reports_dev.report_leave_document</field>
         <field name="print_report_name">'İzin Raporu %s-%s' % (object.date_from, object.date_to)</field>
     </record>
 
@@ -13,7 +13,7 @@
         <field name="name">İzin Raporu (Excel)</field>
         <field name="model">hr.leave.report.wizard</field>
         <field name="report_type">xlsx</field>
-        <field name="report_name">hr_leave_reports_tr.leave_report_xlsx</field>
+        <field name="report_name">hr_leave_reports_dev.leave_report_xlsx</field>
         <field name="report_file">izin_raporu</field>
     </record>
 
@@ -21,8 +21,8 @@
         <field name="name">Yıllık İzin Mutabakat Formu</field>
         <field name="model">hr.leave.reconciliation.wizard</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">hr_leave_reports_tr.report_reconciliation_document</field>
-        <field name="report_file">hr_leave_reports_tr.report_reconciliation_document</field>
+        <field name="report_name">hr_leave_reports_dev.report_reconciliation_document</field>
+        <field name="report_file">hr_leave_reports_dev.report_reconciliation_document</field>
         <field name="print_report_name">'Yıllık İzin Mutabakatı - %s' % (object.employee_id.name)</field>
     </record>
 </odoo>

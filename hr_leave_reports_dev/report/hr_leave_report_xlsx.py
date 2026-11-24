@@ -3,7 +3,7 @@ from odoo import models
 
 
 class LeaveReportXlsx(models.AbstractModel):
-    _name = 'report.hr_leave_reports_tr.leave_report_xlsx'
+    _name = 'report.hr_leave_reports_dev.leave_report_xlsx'
     _inherit = 'report.report_xlsx.abstract'
     _description = 'İzin Raporu (XLSX)'
 

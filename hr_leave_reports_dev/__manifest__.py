@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'İzin Raporları ve Yıllık İzin Mutabakatı',
+    'name': 'İzin Raporları ve Yıllık İzin Mutabakatı (Dev)',
     'summary': 'Personel/izin türü bazlı izin raporları (PDF/Excel) ve yıllık izin mutabakat formu',
     'description': """
         İzin (Time Off) raporlaması:

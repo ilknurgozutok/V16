@@ -166,7 +166,7 @@ class TestLeaveReports(TestLeaveReportsCommon):
     # ------------------------------------------------------------------
     def test_server_action_requires_single_employee(self):
         action = self.env.ref(
-            'hr_leave_reports_tr.action_leave_reconciliation_server')
+            'hr_leave_reports_dev.action_leave_reconciliation_server')
         employees = self.employee | self.employee2
         with self.assertRaises(UserError):
             action.with_context(
@@ -188,16 +188,16 @@ class TestLeaveReports(TestLeaveReportsCommon):
             wizard = self._report_wizard(
                 group_by=group_by, show_description=True)
             html = report._render_qweb_html(
-                'hr_leave_reports_tr.action_report_leave', wizard.ids)[0]
+                'hr_leave_reports_dev.action_report_leave', wizard.ids)[0]
             self.assertIn(b'Test Personel', html)
             content, ext = report._render_xlsx(
-                'hr_leave_reports_tr.action_report_leave_xlsx',
+                'hr_leave_reports_dev.action_report_leave_xlsx',
                 wizard.ids, None)
             self.assertEqual(ext, 'xlsx')
             self.assertTrue(content)
         wizard = self._reconciliation_wizard(2026)
         html = report._render_qweb_html(
-            'hr_leave_reports_tr.action_report_leave_reconciliation',
+            'hr_leave_reports_dev.action_report_leave_reconciliation',
             wizard.ids)[0]
         self.assertIn(b'YILLIK', html)
 
@@ -285,7 +285,7 @@ class TestLeaveReports(TestLeaveReportsCommon):
         wizard = self._report_wizard(
             employee_ids=[(5, 0, 0)], department_id=department.id)
         html = self.env['ir.actions.report']._render_qweb_html(
-            'hr_leave_reports_tr.action_report_leave', wizard.ids)[0]
+            'hr_leave_reports_dev.action_report_leave', wizard.ids)[0]
         self.assertIn(b'Genel Toplam</strong>', html)
 
 
@@ -347,9 +347,9 @@ class TestLeaveReportsHireDate(TestLeaveReportsCommon):
         self.assertTrue(group['hire_label'])
         self.assertNotEqual(group['hire_label'], 'tarih yok')
         env['ir.actions.report']._render_qweb_html(
-            'hr_leave_reports_tr.action_report_leave', wizard.ids)
+            'hr_leave_reports_dev.action_report_leave', wizard.ids)
         env['ir.actions.report']._render_xlsx(
-            'hr_leave_reports_tr.action_report_leave_xlsx', wizard.ids, None)
+            'hr_leave_reports_dev.action_report_leave_xlsx', wizard.ids, None)
 
         rec_wizard = env['hr.leave.reconciliation.wizard'].create({
             'employee_id': self.employee.id,
@@ -360,6 +360,6 @@ class TestLeaveReportsHireDate(TestLeaveReportsCommon):
         self.assertEqual(data['hire_date'], date(2025, 6, 1))
         self.assertEqual(data['departure_date'], date(2026, 6, 30))
         html = env['ir.actions.report']._render_qweb_html(
-            'hr_leave_reports_tr.action_report_leave_reconciliation',
+            'hr_leave_reports_dev.action_report_leave_reconciliation',
             rec_wizard.ids)[0]
         self.assertIn('İşten Ayrılış Tarihi'.encode(), html)
