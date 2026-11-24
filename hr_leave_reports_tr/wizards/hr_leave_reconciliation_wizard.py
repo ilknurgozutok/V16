@@ -46,6 +46,16 @@ class HrLeaveReconciliationWizard(models.TransientModel):
     def _get_allocation_year(allocation):
         return get_allocation_year(allocation)
 
+    def _get_valid_allocations(self):
+        """Mutabakat tarihine kadar geçerliliği başlamış onaylı tahsisler.
+        Geçerlilik başlangıcı (date_from) mutabakat tarihinden sonra olan
+        tahsisler henüz hak doğurmadığı için sayılmaz."""
+        self.ensure_one()
+        return self._get_all_allocations().filtered(
+            lambda a: not a.date_from
+            or fields.Date.to_date(a.date_from)
+            <= self.reconciliation_date)
+
     def _get_leaves_in_period(self, period_start, period_end):
         """Dönemde başlayan onaylı izinler. İzin başladığı yıla sayılır;
         yıl sınırını aşan bir izin iki yılın bakiyesinden birden düşülmez."""
@@ -59,7 +69,7 @@ class HrLeaveReconciliationWizard(models.TransientModel):
 
     def _get_year_allocations(self):
         self.ensure_one()
-        return self._get_all_allocations().filtered(
+        return self._get_valid_allocations().filtered(
             lambda a: self._get_allocation_year(a) == self.year)
 
     def _get_year_leaves(self):
@@ -98,7 +108,7 @@ class HrLeaveReconciliationWizard(models.TransientModel):
         tahsis/kullanılan satırları ve kümülatif kalan bakiye."""
         self.ensure_one()
         allocated_by_year = {}
-        for allocation in self._get_all_allocations():
+        for allocation in self._get_valid_allocations():
             year = self._get_allocation_year(allocation)
             allocated_by_year[year] = allocated_by_year.get(year, 0.0) \
                 + allocation.number_of_days

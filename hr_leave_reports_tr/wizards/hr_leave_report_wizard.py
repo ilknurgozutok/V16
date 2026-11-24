@@ -80,17 +80,20 @@ class HrLeaveReportWizard(models.TransientModel):
             return self._get_employee_start_label(record)
         return ''
 
-    def _get_leave_domain(self):
+    def _get_leave_domain(self, period_start=True):
         """İzinler başladıkları tarihe göre döneme atanır: dönem sınırını
         aşan bir izin, ardışık dönemlerde iki kez sayılmaz. 'İşe Girişten
         İtibaren' modunda alt sınır personel bazında get_grouped_lines
-        içinde uygulanır."""
+        içinde uygulanır.
+
+        period_start=False ile dönem başlangıcı uygulanmaz; özet tablonun
+        birikimli kullanım hesabı için kullanılır."""
         self.ensure_one()
         domain = [
             ('employee_id.company_id', '=', self.company_id.id),
             ('request_date_from', '<=', self.date_to),
         ]
-        if not self.start_from_hire_date:
+        if period_start and not self.start_from_hire_date:
             domain.append(('request_date_from', '>=', self.date_from))
         if self.employee_ids:
             domain.append(('employee_id', 'in', self.employee_ids.ids))
@@ -127,25 +130,22 @@ class HrLeaveReportWizard(models.TransientModel):
         return get_allocation_year(allocation)
 
     def _get_allocations(self):
-        """Seçilen döneme ait tahsisler: tahsisin ait olduğu yıl dönemin
-        yıl aralığı içinde olmalı (süresiz tahsisler her yıla sayılmaz).
-        'İşe Girişten İtibaren' modunda tahsisler işe giriş filtresine tabi
-        değildir; personelin tüm onaylı tahsisleri sayılır.
-
-        Bilinçli tasarım: tahsisler tarih aralığına göre kırpılmaz, dönemin
-        kapsadığı takvim yıllarının tamamı alınır. Tahsisler sonraki yıllara
-        aktarıldığından, kırpılırsa kısa bir dönem seçildiğinde kalan gün
-        hatalı hesaplanıyordu. Kullanım detayı ise seçilen döneme göredir.
-        Hizmet yılı yerine takvim yılı kullanılması da geçmişte geçerlilik
-        başlangıcı hatalı girilmiş tahsisler nedeniyle bilinçli bir
-        tercihtir."""
+        """Özet tablonun tahsisleri: bitiş tarihine kadar geçerliliği
+        başlamış tüm onaylı tahsisler sayılır. Özet, bitiş tarihi
+        itibariyle hak edilen birikimli bakiyeyi gösterdiğinden 'İşe
+        Girişten İtibaren' modunda ya da kısa dönem seçildiğinde de
+        dönem başlangıcı tahsisleri sınırlamaz; süresiz tahsisler
+        yıl-atfı sayesinde her yıla tekrar sayılmaz. Geçerlilik
+        başlangıcı (date_from) rapor bitişinden sonra olan tahsisler
+        henüz hak doğurmadığı için sayılmaz. Dönem sınırı yalnızca
+        kullanım detay tablosuna uygulanır."""
         self.ensure_one()
         allocations = self.env['hr.leave.allocation'].search(
             self._get_allocation_domain())
         return allocations.filtered(
             lambda a: self._get_allocation_year(a) <= self.date_to.year
-            and (self.start_from_hire_date
-                 or self._get_allocation_year(a) >= self.date_from.year))
+            and (not a.date_from
+                 or fields.Date.to_date(a.date_from) <= self.date_to))
 
     def _get_leaves(self):
         self.ensure_one()
@@ -162,6 +162,11 @@ class HrLeaveReportWizard(models.TransientModel):
             else 'employee_id'
         leaves = self._get_leaves()
         allocations = self._get_allocations()
+        # Özet tablosu birikimli bakiye gösterir: kullanılan gün de
+        # tahsisler gibi dönem başlangıcından bağımsız, bitişe kadarki
+        # tüm izinler üzerinden hesaplanır. 'İşe Girişten İtibaren'
+        # modunda izinler zaten personelin etkin başlangıcıyla
+        # sınırlıdır; detay tablosu yalnızca dönemi listeler.
         if self.start_from_hire_date:
             starts = {}
             for employee in leaves.employee_id:
@@ -169,6 +174,11 @@ class HrLeaveReportWizard(models.TransientModel):
             leaves = leaves.filtered(
                 lambda l: not starts[l.employee_id.id]
                 or l.request_date_from >= starts[l.employee_id.id])
+            summary_leaves = leaves
+        else:
+            summary_leaves = self.env['hr.leave'].search(
+                self._get_leave_domain(period_start=False),
+                order='request_date_from')
         groups = OrderedDict()
         for leave in leaves:
             groups.setdefault(leave[key_field], self.env['hr.leave'])
@@ -183,15 +193,28 @@ class HrLeaveReportWizard(models.TransientModel):
             allocated = sum(group_allocations.mapped('number_of_days'))
             used = sum(leaves.mapped('number_of_days'))
             # Bilinçli tasarım: özet tablo kalan izin haklarını göstermek
-            # içindir; yalnızca tahsisi olan izin türleri/personeller yer
-            # alır. Tahsissiz izinler (mazeret, rapor vb.) toplu raporlarda
+            # içindir; 'tahsisat gerektirir' olan izin türleri takip edilir.
+            # Tahsis kaydı olmasa da bu türlerde birikimli kullanımı olan
+            # satırlar Tahsis 0 / negatif Kalan ile görünür; tahsis
+            # gerektirmeyen türler (mazeret, rapor vb.) toplu raporlarda
             # özeti karıştırdığı için yalnızca detay tablosunda listelenir.
-            breakdown_records = group_allocations.mapped(
-                breakdown_field).sorted('name')
+            breakdown_records = group_allocations.mapped(breakdown_field)
+            usage_records = summary_leaves.filtered(
+                lambda l: l[key_field] == record).mapped(breakdown_field)
+            if self.group_by == 'employee':
+                tracked = usage_records.filtered(
+                    lambda lt: lt.requires_allocation == 'yes')
+            elif record.requires_allocation == 'yes':
+                tracked = usage_records
+            else:
+                tracked = self.env['hr.employee']
+            breakdown_records = (
+                breakdown_records | tracked).sorted('name')
             breakdown = []
             for brecord in breakdown_records:
-                b_leaves = leaves.filtered(
-                    lambda l: l[breakdown_field] == brecord)
+                b_leaves = summary_leaves.filtered(
+                    lambda l: l[key_field] == record
+                    and l[breakdown_field] == brecord)
                 b_allocations = group_allocations.filtered(
                     lambda a: a[breakdown_field] == brecord)
                 b_allocated = sum(b_allocations.mapped('number_of_days'))
@@ -212,7 +235,7 @@ class HrLeaveReportWizard(models.TransientModel):
                 'leaves': leaves,
                 'total_days': used,
                 'allocated_days': allocated,
-                'remaining_days': allocated - used,
+                'remaining_days': allocated - summary_used,
                 'summary_used_days': summary_used,
                 'summary_remaining_days': allocated - summary_used,
                 'breakdown': breakdown,

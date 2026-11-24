@@ -95,17 +95,24 @@ izin türü bazlı raporda her türün personelleri.</p>
 <table>
   <tr><th>Sütun</th><th>Anlamı</th></tr>
   <tr><td class="field">Tahsis (Gün)</td>
-      <td>Döneme ait onaylı izin tahsisi. Tahsis, başlangıç tarihinin (<code>date_from</code>)
-          yılına yazılır; süresiz tahsisler her yıla tekrar sayılmaz.</td></tr>
+      <td>Bitiş tarihine kadar geçerliliği başlamış tüm onaylı izin tahsisleri
+          (birikimli). Geçerlilik başlangıcı (<code>date_from</code>) rapor bitişinden
+          sonra olan tahsisler henüz hak doğurmadığı için sayılmaz; süresiz
+          tahsisler her yıla tekrar sayılmaz.</td></tr>
   <tr><td class="field">Kullanılan (Gün)</td>
-      <td>Dönem içinde kullanılan izin günü.</td></tr>
+      <td>Bitiş tarihine kadar kullanılan tüm izin günleri (birikimli).</td></tr>
   <tr><td class="field">Kalan (Gün)</td>
-      <td>Tahsis &minus; Kullanılan. Yalnızca tahsisatı olan izin türleri listelenir.</td></tr>
+      <td>Tahsis &minus; Kullanılan; bitiş tarihi itibariyle güncel izin bakiyesi.
+          &ldquo;Tahsisat Gerektirir&rdquo; olarak işaretli izin türleri izlenir;
+          tahsis kaydı olmayan türde kullanım varsa satır negatif kalanla görünür.</td></tr>
 </table>
 <ul>
   <li>Tek grup raporlandığında grup toplam satırı da görünür; çoklu seçimde yalnızca
       genel toplam satırı vardır.</li>
-  <li>Departman filtresi seçiliyken özet tabloda genel toplam satırı gösterilmez.</li>
+  <li>Özet tablosu birikimli bakiye gösterdiğinden Başlangıç Tarihi veya kısa bir
+      dönem seçimi özeti etkilemez; dönem sınırları yalnızca İzin Kullanım Detayı
+      tablosundaki kayıtları belirler. Bu nedenle özetin Kullanılan toplamı ile
+      detay tablosunun toplamı farklı görünebilir.</li>
 </ul>
 <p><strong>İzin Kullanım Detayı</strong> (alt bölüm): Dönemdeki tüm izin kayıtlarını
 başlangıç/bitiş tarihi, gün, durum ve (seçiliyse) açıklama bilgisiyle listeler.
@@ -156,7 +163,9 @@ Yıllık İzin Mutabakat Formu (personel otomatik seçili gelir).</p>
       kayıtlar) kendi yıllarında görünür &mdash; bu, veri düzeltmesi gerektiren
       kayıtların raporda fark edilmesini sağlar.</li>
   <li>Yalnızca <strong>onaylı</strong> izin ve tahsis kayıtları hesaba katılır;
-      reddedilen ve iptal edilen kayıtlar sayılmaz.</li>
+      reddedilen ve iptal edilen kayıtlar sayılmaz. Geçerlilik başlangıcı
+      (<code>date_from</code>) Mutabakat Tarihi'nden sonra olan tahsisler henüz
+      hak doğurmadığı için sayılmaz.</li>
   <li>Devir tutarı, yıl bazında özet tablosundaki kümülatif kalan ile tutarlıdır.</li>
 </ul>
 
@@ -172,8 +181,10 @@ tarihli tahsis), kayıttaki başlangıç tarihini düzelttikten sonra raporu yen
           detay tabloda yalnızca izin kaydı olanlar listelenir. Filtreleri
           (departman, izin türü, durum) kontrol edin.</td></tr>
   <tr><td>Özet tabloda bir izin türü neden yok?</td>
-      <td>Özet yalnızca tahsisatı olan izin türlerini gösterir. Tahsis gerektirmeyen
-          türlerdeki kullanımlar yalnızca İzin Kullanım Detayı bölümünde görünür.</td></tr>
+      <td>Özet, &ldquo;Tahsisat Gerektirir = Evet&rdquo; olan izin türlerini izler;
+          tahsis kaydı olmasa bile o türde kullanım varsa satır listelenir. Tahsis
+          gerektirmeyen türlerdeki kullanımlar yalnızca İzin Kullanım Detayı
+          bölümünde görünür.</td></tr>
   <tr><td>Mutabakat devir tutarı nereden geliyor?</td>
       <td>Seçilen yıldan önceki tüm yılların (tahsis &minus; kullanılan) toplamıdır;
           yıl bazında özet tablosundaki bir önceki yılın kalanına eşittir.</td></tr>

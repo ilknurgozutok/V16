@@ -236,12 +236,47 @@ class TestLeaveReports(TestLeaveReportsCommon):
             [self.leave_type])
 
     def test_short_period_uses_full_year_allocation(self):
-        """Kısa dönemde tahsis yılın tamamından gelir, kullanım dönemden."""
+        """Kısa dönemde özet birikimlidir: geçerli tüm tahsisler sayılır,
+        kullanım detayı dönemden gelir."""
         wizard = self._report_wizard(
             date_from=date(2026, 3, 1), date_to=date(2026, 3, 31))
         group = wizard.get_grouped_lines()[0]
-        self.assertAlmostEqual(group['allocated_days'], 14)
+        self.assertAlmostEqual(group['allocated_days'], 28)
         self.assertEqual(group['leaves'], self.leave_2026)
+
+    def test_allocated_type_without_allocation_shows_negative(self):
+        """'Tahsisat gerektirir' türde tahsis yok ama kullanım varsa
+        özet satırı Tahsis 0 / negatif Kalan ile görünür."""
+        free_type = self.env['hr.leave.type'].create({
+            'name': 'Test İkame İzni',
+            'requires_allocation': 'yes',
+            'allocation_validation_type': 'officer',
+            'leave_validation_type': 'hr',
+            'request_unit': 'day',
+            'company_id': self.company.id,
+        })
+        self.env['hr.leave'].with_context(
+            leave_fast_create=True, leave_skip_state_check=True,
+            leave_skip_date_check=True,
+        ).create({
+            'name': 'İkame kullanım',
+            'employee_id': self.employee.id,
+            'holiday_status_id': free_type.id,
+            'date_from': datetime(2025, 6, 2, 8),
+            'date_to': datetime(2025, 6, 2, 17),
+            'request_date_from': date(2025, 6, 2),
+            'request_date_to': date(2025, 6, 2),
+            'number_of_days': 1,
+            'state': 'validate',
+        })
+        wizard = self._report_wizard(
+            holiday_status_ids=[(6, 0, (self.leave_type | free_type).ids)])
+        group = wizard.get_grouped_lines()[0]
+        rows = {line['record']: line for line in group['breakdown']}
+        self.assertIn(free_type, rows)
+        self.assertAlmostEqual(rows[free_type]['allocated_days'], 0)
+        self.assertAlmostEqual(rows[free_type]['used_days'], 1)
+        self.assertAlmostEqual(rows[free_type]['remaining_days'], -1)
 
     def test_grand_total_visible_with_department_filter(self):
         department = self.env['hr.department'].create({
