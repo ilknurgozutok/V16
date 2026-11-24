@@ -250,9 +250,9 @@ class HrLeaveReportWizard(models.TransientModel):
     def action_print_pdf(self):
         self.ensure_one()
         return self.env.ref(
-            'hr_leave_reports_dev.action_report_leave').report_action(self)
+            'hr_leave_reports_tr.action_report_leave').report_action(self)
 
     def action_print_xlsx(self):
         self.ensure_one()
         return self.env.ref(
-            'hr_leave_reports_dev.action_report_leave_xlsx').report_action(self)
+            'hr_leave_reports_tr.action_report_leave_xlsx').report_action(self)

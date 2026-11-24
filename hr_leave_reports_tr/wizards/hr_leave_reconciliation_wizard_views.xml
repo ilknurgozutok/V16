@@ -40,7 +40,7 @@ wizard = env['hr.leave.reconciliation.wizard'].create({
     'employee_id': records.id,
 })
 action = env['ir.actions.act_window']._for_xml_id(
-    'hr_leave_reports_dev.action_leave_reconciliation_wizard')
+    'hr_leave_reports_tr.action_leave_reconciliation_wizard')
 action['res_id'] = wizard.id
         </field>
     </record>

@@ -164,5 +164,5 @@ class HrLeaveReconciliationWizard(models.TransientModel):
     def action_print(self):
         self.ensure_one()
         return self.env.ref(
-            'hr_leave_reports_dev.action_report_leave_reconciliation'
+            'hr_leave_reports_tr.action_report_leave_reconciliation'
         ).report_action(self)
