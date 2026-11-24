@@ -91,25 +91,21 @@ aynı veriyi iki formatta üretir.</p>
 <h3>2.2 Rapor Yapısı</h3>
 <p><strong>Özet tablosu</strong> (raporun üst bölümü): Gruplamanın ters boyutunda
 kırılımlı satırlar içerir &mdash; personel bazlı raporda her personelin izin türleri,
-izin türü bazlı raporda her türün personelleri. Özet, Bitiş Tarihi
-itibariyle birikimli bakiyeyi gösterir; Başlangıç Tarihi yalnızca detay
-tablosundaki kayıtları sınırlar.</p>
+izin türü bazlı raporda her türün personelleri.</p>
 <table>
   <tr><th>Sütun</th><th>Anlamı</th></tr>
   <tr><td class="field">Tahsis (Gün)</td>
-      <td>Rapor Bitiş Tarihi'ne kadar geçerliliği başlamış onaylı tahsislerin
-          toplamı. Tahsis, başlangıç tarihinin (<code>date_from</code>)
+      <td>Döneme ait onaylı izin tahsisi. Tahsis, başlangıç tarihinin (<code>date_from</code>)
           yılına yazılır; süresiz tahsisler her yıla tekrar sayılmaz.</td></tr>
   <tr><td class="field">Kullanılan (Gün)</td>
-      <td>Rapor Bitiş Tarihi'ne kadar kullanılan toplam izin günü
-          (birikimli).</td></tr>
+      <td>Dönem içinde kullanılan izin günü.</td></tr>
   <tr><td class="field">Kalan (Gün)</td>
-      <td>Tahsis &minus; Kullanılan. Bitiş tarihi itibariyle güncel kalan
-          bakiyeyi verir. Yalnızca tahsisatı olan izin türleri listelenir.</td></tr>
+      <td>Tahsis &minus; Kullanılan. Yalnızca tahsisatı olan izin türleri listelenir.</td></tr>
 </table>
 <ul>
   <li>Tek grup raporlandığında grup toplam satırı da görünür; çoklu seçimde yalnızca
       genel toplam satırı vardır.</li>
+  <li>Departman filtresi seçiliyken özet tabloda genel toplam satırı gösterilmez.</li>
 </ul>
 <p><strong>İzin Kullanım Detayı</strong> (alt bölüm): Dönemdeki tüm izin kayıtlarını
 başlangıç/bitiş tarihi, gün, durum ve (seçiliyse) açıklama bilgisiyle listeler.
@@ -159,9 +155,6 @@ Yıllık İzin Mutabakat Formu (personel otomatik seçili gelir).</p>
       Hatalı başlangıç tarihli tahsisler (örn. işe girişten önceki yıllara tarihlenmiş
       kayıtlar) kendi yıllarında görünür &mdash; bu, veri düzeltmesi gerektiren
       kayıtların raporda fark edilmesini sağlar.</li>
-  <li>Geçerlilik başlangıcı (<code>date_from</code>) rapor Bitiş Tarihi'nden sonra
-      olan tahsisler henüz hak doğurmadığı için hesaba katılmaz. Mutabakat
-      formunda da Mutabakat Tarihi'nden sonra başlayan tahsisler sayılmaz.</li>
   <li>Yalnızca <strong>onaylı</strong> izin ve tahsis kayıtları hesaba katılır;
       reddedilen ve iptal edilen kayıtlar sayılmaz.</li>
   <li>Devir tutarı, yıl bazında özet tablosundaki kümülatif kalan ile tutarlıdır.</li>

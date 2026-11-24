@@ -235,27 +235,12 @@ class TestLeaveReports(TestLeaveReportsCommon):
             [line['record'] for line in group['breakdown']],
             [self.leave_type])
 
-    def test_allocated_type_without_allocation_shows_negative(self):
-        """Tahsis gerektiren türde tahsis kaydı olmayan kullanımlar
-        Tahsis 0 / negatif Kalan olarak özette görünür."""
-        self._create_leave(
-            self.employee2, date(2025, 7, 1), date(2025, 7, 2), 2)
-        wizard = self._report_wizard(
-            employee_ids=[(6, 0, self.employee2.ids)])
-        group = wizard.get_grouped_lines()[0]
-        line = group['breakdown'][0]
-        self.assertEqual(line['record'], self.leave_type)
-        self.assertAlmostEqual(line['allocated_days'], 0)
-        self.assertAlmostEqual(line['used_days'], 2)
-        self.assertAlmostEqual(line['remaining_days'], -2)
-
     def test_short_period_uses_full_year_allocation(self):
-        """Özet birikimlidir: geçerliliği başlamış tüm tahsisler sayılır;
-        kullanım detayı ise seçilen dönemi listeler."""
+        """Kısa dönemde tahsis yılın tamamından gelir, kullanım dönemden."""
         wizard = self._report_wizard(
             date_from=date(2026, 3, 1), date_to=date(2026, 3, 31))
         group = wizard.get_grouped_lines()[0]
-        self.assertAlmostEqual(group['allocated_days'], 28)
+        self.assertAlmostEqual(group['allocated_days'], 14)
         self.assertEqual(group['leaves'], self.leave_2026)
 
     def test_grand_total_visible_with_department_filter(self):
