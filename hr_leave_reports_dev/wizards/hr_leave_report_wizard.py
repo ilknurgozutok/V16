@@ -114,6 +114,9 @@ class HrLeaveReportWizard(models.TransientModel):
         domain = [
             ('employee_id.company_id', '=', self.company_id.id),
             ('state', '=', 'validate'),
+            # Arşivlenmiş izin türlerine ait tahsisler özete girmez;
+            # aksi halde satırı gösterilmeyen tür toplamı şişirirdi.
+            ('holiday_status_id.active', '=', True),
         ]
         if self.employee_ids:
             domain.append(('employee_id', 'in', self.employee_ids.ids))
@@ -196,15 +199,17 @@ class HrLeaveReportWizard(models.TransientModel):
             # içindir; 'tahsisat gerektirir' olan izin türleri takip edilir.
             # Tahsis kaydı olmasa da bu türlerde birikimli kullanımı olan
             # satırlar Tahsis 0 / negatif Kalan ile görünür; tahsis
-            # gerektirmeyen türler (mazeret, rapor vb.) toplu raporlarda
-            # özeti karıştırdığı için yalnızca detay tablosunda listelenir.
+            # gerektirmeyen ya da arşivlenmiş türler (mazeret, rapor vb.)
+            # toplu raporlarda özeti karıştırdığı için yalnızca detay
+            # tablosunda listelenir.
             breakdown_records = group_allocations.mapped(breakdown_field)
             usage_records = summary_leaves.filtered(
                 lambda l: l[key_field] == record).mapped(breakdown_field)
             if self.group_by == 'employee':
                 tracked = usage_records.filtered(
-                    lambda lt: lt.requires_allocation == 'yes')
-            elif record.requires_allocation == 'yes':
+                    lambda lt: lt.active
+                    and lt.requires_allocation == 'yes')
+            elif record.active and record.requires_allocation == 'yes':
                 tracked = usage_records
             else:
                 tracked = self.env['hr.employee']

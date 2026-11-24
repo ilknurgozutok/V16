@@ -103,8 +103,9 @@ izin türü bazlı raporda her türün personelleri.</p>
       <td>Bitiş tarihine kadar kullanılan tüm izin günleri (birikimli).</td></tr>
   <tr><td class="field">Kalan (Gün)</td>
       <td>Tahsis &minus; Kullanılan; bitiş tarihi itibariyle güncel izin bakiyesi.
-          &ldquo;Tahsisat Gerektirir&rdquo; olarak işaretli izin türleri izlenir;
-          tahsis kaydı olmayan türde kullanım varsa satır negatif kalanla görünür.</td></tr>
+          Aktif ve &ldquo;Tahsisat Gerektirir&rdquo; olarak işaretli izin türleri
+          izlenir; tahsis kaydı olmayan türde kullanım varsa satır negatif
+          kalanla görünür. Arşivlenmiş türler özete girmez.</td></tr>
 </table>
 <ul>
   <li>Tek grup raporlandığında grup toplam satırı da görünür; çoklu seçimde yalnızca
@@ -181,10 +182,11 @@ tarihli tahsis), kayıttaki başlangıç tarihini düzelttikten sonra raporu yen
           detay tabloda yalnızca izin kaydı olanlar listelenir. Filtreleri
           (departman, izin türü, durum) kontrol edin.</td></tr>
   <tr><td>Özet tabloda bir izin türü neden yok?</td>
-      <td>Özet, &ldquo;Tahsisat Gerektirir = Evet&rdquo; olan izin türlerini izler;
-          tahsis kaydı olmasa bile o türde kullanım varsa satır listelenir. Tahsis
-          gerektirmeyen türlerdeki kullanımlar yalnızca İzin Kullanım Detayı
-          bölümünde görünür.</td></tr>
+      <td>Özet, <strong>aktif</strong> ve &ldquo;Tahsisat Gerektirir = Evet&rdquo;
+          olan izin türlerini izler; tahsis kaydı olmasa bile o türde kullanım
+          varsa satır listelenir. Tahsis gerektirmeyen veya arşivlenmiş
+          türlerdeki kullanımlar yalnızca İzin Kullanım Detayı bölümünde
+          görünür.</td></tr>
   <tr><td>Mutabakat devir tutarı nereden geliyor?</td>
       <td>Seçilen yıldan önceki tüm yılların (tahsis &minus; kullanılan) toplamıdır;
           yıl bazında özet tablosundaki bir önceki yılın kalanına eşittir.</td></tr>
